@@ -1,15 +1,19 @@
 name: Deploy 3D Game to GitHub Pages
+
 on:
   push:
     branches: [main]
   workflow_dispatch:
+
 permissions:
   contents: read
   pages: write
   id-token: write
+
 concurrency:
   group: github-pages
   cancel-in-progress: false
+
 jobs:
   deploy:
     environment:
@@ -18,6 +22,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
+      - name: Reassemble Godot 3D game pack from binary parts
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          files = sorted(Path(".").glob("index.pck.[0-9][0-9][0-9].bin"))
+          if not files:
+              raise SystemExit("Missing game pack parts")
+          for i, part in enumerate(files):
+              if part.name != f"index.pck.{i:03d}.bin":
+                  raise SystemExit(f"Missing or misordered game pack part: {part.name}")
+          data = b"".join(p.read_bytes() for p in files)
+          if not data.startswith(b"GDPC"):
+              raise SystemExit("Reassembled game pack has invalid Godot header")
+          Path("index.pck").write_bytes(data)
+          html = Path("index.html").read_text(encoding="utf-8")
+          html, changes = re.subn(r'"index\.pck":\d+', '"index.pck":'+str(len(data)), html, count=1)
+          if changes != 1:
+              raise SystemExit("Cannot locate game pack size in index.html")
+          html = re.sub(r"<title>.*?</title>", "<title>Пакости по соседству 3D — обновлённая квартира</title>", html, count=1)
+          Path("index.html").write_text(html, encoding="utf-8")
+          for p in files:
+              p.unlink()
+          print(f"Validated Godot 3D build: {len(data)} bytes, {len(files)} chunks")
+          PY
       - uses: actions/upload-pages-artifact@v3
         with:
           path: .
