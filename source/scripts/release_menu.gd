@@ -78,7 +78,9 @@ func start_classic():
   if child is AudioStreamPlayer:child.bus="SFX"
  music.volume_db=-6
 func return_menu():
- if is_instance_valid(active_game):get_tree().root.remove_child(active_game);active_game.queue_free()
+ if is_instance_valid(active_game):
+  for player in active_game.find_children("*","AudioStreamPlayer",true,false):player.stop()
+  get_tree().root.remove_child(active_game);active_game.queue_free()
  active_game=null;panel.show();settings.load(SAVE);music.volume_db=0;get_viewport().scaling_3d_scale=1
 func _process(_dt):
  if is_instance_valid(active_game) and active_game.get_script()==preload("res://scripts/game_3d.gd") and active_game.state==0:return_menu()
@@ -89,3 +91,11 @@ func _notification(what):
  elif what==NOTIFICATION_APPLICATION_FOCUS_IN:
   if is_instance_valid(music):music.stream_paused=false
   if is_instance_valid(active_game):active_game.process_mode=Node.PROCESS_MODE_INHERIT
+
+func _input(event):
+ if is_instance_valid(panel) and panel.visible:
+  var ui=modal if is_instance_valid(modal) else panel
+  if preload("res://scripts/touch_ui.gd").handle(ui,event):get_viewport().set_input_as_handled()
+
+func _exit_tree():
+ if is_instance_valid(music):music.stop()

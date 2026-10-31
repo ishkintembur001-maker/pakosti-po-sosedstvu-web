@@ -134,6 +134,7 @@ func cell(p:Vector2,f:int)->Vector2i:
  return best
 func path(a:Vector2,b:Vector2,f:int)->PackedVector2Array:return navs[f].get_point_path(cell(a,f),cell(b,f))
 func start_case(n:int):
+ if is_instance_valid(hud) and is_instance_valid(hud.result):hud.result.queue_free();hud.result=null
  index=clampi(n,0,CASES.size()-1);floor_id=0;neighbor_floor=int(CASES[index].floor);player_pos=Vector2(4.2,1.1);neighbor_pos=Vector2(-4.1,1.1)
  for t in targets:t.node.queue_free()
  for t in supplies:t.node.queue_free()
@@ -313,3 +314,7 @@ func _unhandled_input(e):
   elif e.keycode==KEY_Q:set_quality(not quality)
 func _notification(what):
  if what==NOTIFICATION_APPLICATION_FOCUS_OUT:stick=Vector2.ZERO;stick_id=-100;player_path.clear()
+
+func _exit_tree():
+ for player in sfx.values():
+  if is_instance_valid(player):player.stop()

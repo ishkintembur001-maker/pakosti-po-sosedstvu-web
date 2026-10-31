@@ -13,7 +13,9 @@ func run():
  # Isolate QA progress from the user's normal save.
  var cfg=ConfigFile.new();var save=ProjectSettings.globalize_path("user://pakosti_release.cfg");var had=FileAccess.file_exists(save);var old=FileAccess.get_file_as_bytes(save) if had else PackedByteArray()
  var menu=load("res://scenes/release_menu.tscn").instantiate();root.add_child(menu);await process_frame
- menu.menu_action(1);var g=menu.active_game;g.set_process(false)
+ var launch_touch=InputEventScreenTouch.new();launch_touch.index=0;launch_touch.position=Vector2(200,257);launch_touch.pressed=true;menu._input(launch_touch)
+ check(is_instance_valid(menu.active_game),"Menu screen touch did not launch game")
+ var g=menu.active_game;g.set_process(false)
  for mission in range(8):
   g.start_case(mission)
   for item in g.supplies:
@@ -31,8 +33,12 @@ func run():
   check(g.state=="won","Patrol did not trigger every trap in case %d"%mission)
   print("HOUSE_CASE_OK ",mission+1," simulated_frames=",frames)
  # Multitouch: action finger must not replace or release movement finger.
+ if is_instance_valid(g.hud.result):g.hud.result.free();g.hud.result=null
  g.start_case(0);g.handle_touch(0,Vector2(135,451),true);check(g.stick_id==0 and g.stick.x>.5,"Joystick start failed")
- g.handle_touch(1,Vector2(820,480),true);g.act();g.handle_touch(1,Vector2(820,480),false);check(g.stick_id==0 and g.stick.x>.5,"Second finger cancelled joystick")
+ g.player_pos=g.supplies[0].pos
+ var action_touch=InputEventScreenTouch.new();action_touch.index=1;action_touch.position=Vector2(820,480);action_touch.pressed=true;g.hud._input(action_touch)
+ check(g.supplies[0].taken,"Touch action button did not collect item")
+ g.handle_touch(1,Vector2(820,480),true);g.handle_touch(1,Vector2(820,480),false);check(g.stick_id==0 and g.stick.x>.5,"Second finger cancelled joystick")
  g.handle_touch(0,Vector2(100,451),false);check(g.stick==Vector2.ZERO,"Joystick release failed")
  g.floor_id=1;g.player_pos=Vector2(5,-2.15);g.act();for f in range(190):g._process(1.0/60)
  check(g.floor_id==0 and not g.blocked(g.player_pos,0),"Stair descent failed")
@@ -43,4 +49,5 @@ func run():
  if had:
   var file=FileAccess.open(save,FileAccess.WRITE);file.store_buffer(old);file.close()
  else:DirAccess.remove_absolute(save)
+ await create_timer(.2).timeout
  print("HOUSE_QA_DONE failures=",failures);quit(1 if failures else 0)

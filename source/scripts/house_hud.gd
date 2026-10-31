@@ -23,11 +23,11 @@ func refresh():
  var done=0
  for t in game.targets:
   if t.used:done+=1
- top.text="%02d  %s   |   ЭТАЖ %d   |   ♥ %d"%[game.index+1,game.CASES[game.index].title,game.floor_id+1,game.lives]
+ top.text="%02d  %s   |   ЭТАЖ %d   |   ЖИЗНИ %d"%[game.index+1,game.CASES[game.index].title,game.floor_id+1,game.lives]
  var bag=[]
  for i in range(4):
   if game.inventory[i]:bag.append(game.NAMES[i])
- objective.text="Пакости: %d / %d  •  Рюкзак: %s  •  %s"%[done,game.targets.size(),", ".join(bag) if not bag.is_empty() else "пуст", "ТИХО В УКРЫТИИ" if game.hidden else "Подбери предметы → подготовь ловушки → спрячься"]
+ objective.text="Пакости: %d / %d  •  Рюкзак: %s  •  %s"%[done,game.targets.size(),", ".join(bag) if not bag.is_empty() else "пуст", "ТИХО В УКРЫТИИ" if game.hidden else "Подбери предметы, подготовь ловушки и спрячься"]
  action.text=game.hint();queue_redraw()
 func _draw():
  if not is_instance_valid(game):return
@@ -45,3 +45,7 @@ func show_result(won:bool):
  var next=Button.new();next.text="СЛЕДУЮЩЕЕ ЗАДАНИЕ" if won and game.index<7 else "ПОВТОРИТЬ";next.custom_minimum_size.y=42
  next.pressed.connect(func():result.queue_free();game.start_case(mini(game.index+1,7) if won and game.index<7 else game.index));box.add_child(next)
  var menu=Button.new();menu.text="В МЕНЮ";menu.custom_minimum_size.y=38;menu.pressed.connect(func():game.menu_requested.emit());box.add_child(menu)
+
+func _input(event):
+ var ui=result if is_instance_valid(result) else self
+ if preload("res://scripts/touch_ui.gd").handle(ui,event):get_viewport().set_input_as_handled()
