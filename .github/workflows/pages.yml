@@ -28,23 +28,26 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           import re
-          files = sorted(Path(".").glob("index.pck.[0-9][0-9][0-9].bin"))
+          import hashlib
+          files = sorted(Path(".").glob("index.pck.v2.[0-9][0-9][0-9].bin"))
           if not files:
               raise SystemExit("Missing game pack parts")
           for i, part in enumerate(files):
-              if part.name != f"index.pck.{i:03d}.bin":
+              if part.name != f"index.pck.v2.{i:03d}.bin":
                   raise SystemExit(f"Missing or misordered game pack part: {part.name}")
           data = b"".join(p.read_bytes() for p in files)
           if not data.startswith(b"GDPC"):
               raise SystemExit("Reassembled game pack has invalid Godot header")
+          if hashlib.sha256(data).hexdigest() != "df42ab6a8e9d1f79994a22d5c74bad7ae31e8c03fbb8a65a7246f43e3183d097":
+              raise SystemExit("PBR game pack digest mismatch")
           Path("index.pck").write_bytes(data)
           html = Path("index.html").read_text(encoding="utf-8")
           html, changes = re.subn(r'"index\.pck":\d+', '"index.pck":'+str(len(data)), html, count=1)
           if changes != 1:
               raise SystemExit("Cannot locate game pack size in index.html")
-          html = re.sub(r"<title>.*?</title>", "<title>Пакости по соседству 3D — обновлённая квартира</title>", html, count=1)
+          html = re.sub(r"<title>.*?</title>", "<title>Пакости по соседству 3D — текстурированная квартира</title>", html, count=1)
           Path("index.html").write_text(html, encoding="utf-8")
-          for p in files:
+          for p in Path(".").glob("index.pck.*.bin"):
               p.unlink()
           print(f"Validated Godot 3D build: {len(data)} bytes, {len(files)} chunks")
           PY
