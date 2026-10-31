@@ -2,11 +2,15 @@
 Run with Blender 4.3: blender -b --python art/refine_cast.py
 Input retained as two_storey_base.glb. Produces editable master + GLB with animations.
 """
-import bpy,math,os,bmesh
+import bpy,math,os,bmesh,gzip,hashlib
 from mathutils import Vector
 ROOT=os.path.abspath(os.path.join(os.path.dirname(__file__),'..'))
 bpy.ops.object.select_all(action='SELECT');bpy.ops.object.delete(use_global=False)
-bpy.ops.import_scene.gltf(filepath=os.path.join(ROOT,'assets/models/two_storey_base.glb'))
+base=os.path.join(ROOT,'assets/models/two_storey_base.glb')
+if not os.path.exists(base):
+ with gzip.open(base+'.gz','rb') as src,open(base,'wb') as dst:dst.write(src.read())
+assert hashlib.sha256(open(base,'rb').read()).hexdigest()=='fc7a8ab2c1895b7a3e6e1b98686b1331d14a4c8ac3bf68373636fbac4ca80b6c'
+bpy.ops.import_scene.gltf(filepath=base)
 scene=bpy.context.scene;scene.render.fps=30
 for name in ['TricksterCharacter','NeighborCharacter']:
  root=bpy.data.objects[name];enemy=name.startswith('Neighbor');z=1.69 if enemy else 1.58

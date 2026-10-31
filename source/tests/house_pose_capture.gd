@@ -9,7 +9,7 @@ func run():
  var folder=ProjectSettings.globalize_path("res://../evidence/poses/");DirAccess.make_dir_recursive_absolute(folder)
  for clip in ["idle","walk","sneak","run","pickup","plant_trap","react_slip","react_surprise","celebrate"]:
   for actor in [g.hero,g.neighbor]:
-   var p:AnimationPlayer=actor.get_meta("animation_player");p.play(clip);p.seek(.33,true);p.speed_scale=0
+   var p:AnimationPlayer=actor.get_meta("animation_player");p.play(clip);p.advance(0);p.seek(p.get_animation(clip).length*.35,true);p.advance(0);p.speed_scale=0
   for i in range(3):await process_frame
   await RenderingServer.frame_post_draw
   root.get_texture().get_image().save_png(folder+clip+".png")

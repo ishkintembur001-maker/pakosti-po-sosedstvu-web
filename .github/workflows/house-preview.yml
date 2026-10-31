@@ -1,0 +1,59 @@
+name: Verify two-storey development build
+on:
+  push:
+    branches: [development/two-storey-playable]
+  pull_request:
+    paths: ['source/**', '.github/workflows/house-preview.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y xvfb libxi6 libxrender1 libxxf86vm1 libxfixes3 libgl1 python3-pil
+          mkdir -p tools evidence next-dist
+          curl -fLsS --retry 3 https://download.blender.org/release/Blender4.3/blender-4.3.2-linux-x64.tar.xz -o tools/blender.tar.xz
+          tar -xf tools/blender.tar.xz -C tools
+          curl -fLsS --retry 3 https://github.com/godotengine/godot-builds/releases/download/4.4.1-stable/Godot_v4.4.1-stable_linux.x86_64.zip -o tools/godot.zip
+          unzip -q tools/godot.zip -d tools
+          chmod +x tools/Godot_v4.4.1-stable_linux.x86_64
+          curl -fLsS --retry 3 https://github.com/godotengine/godot-builds/releases/download/4.4.1-stable/Godot_v4.4.1-stable_export_templates.tpz -o tools/templates.tpz
+          mkdir -p ~/.local/share/godot/export_templates/4.4.1.stable
+          unzip -oj tools/templates.tpz templates/web_nothreads_release.zip -d ~/.local/share/godot/export_templates/4.4.1.stable
+      - name: Build original and new Blender assets
+        run: |
+          python3 source/art/make_textures.py
+          tools/blender-4.3.2-linux-x64/blender -b --python source/art/build_assets.py > evidence/classic-blender.log 2>&1
+          tools/blender-4.3.2-linux-x64/blender -b --python source/art/refine_cast.py > evidence/house-blender.log 2>&1
+      - name: Verify gameplay and animations
+        run: |
+          tools/Godot_v4.4.1-stable_linux.x86_64 --headless --editor --path source --import --quit > evidence/import.log 2>&1
+          for test in episode_smoke mobile_qa house_qa animation_qa; do
+            tools/Godot_v4.4.1-stable_linux.x86_64 --headless --audio-driver Dummy --path source --script res://tests/$test.gd > evidence/$test.log 2>&1
+          done
+          if grep -E 'SCRIPT ERROR|Parse Error|TEST_FAILED' evidence/*.log; then exit 1; fi
+      - name: Capture real engine frames and export preview
+        run: |
+          xvfb-run -a tools/Godot_v4.4.1-stable_linux.x86_64 --audio-driver Dummy --path source --script res://tests/house_capture.gd > evidence/capture.log 2>&1
+          xvfb-run -a tools/Godot_v4.4.1-stable_linux.x86_64 --audio-driver Dummy --path source --script res://tests/house_pose_capture.gd > evidence/poses.log 2>&1
+          xvfb-run -a tools/Godot_v4.4.1-stable_linux.x86_64 --audio-driver Dummy --path source --script res://tests/house_performance.gd > evidence/performance.log 2>&1
+          tools/Godot_v4.4.1-stable_linux.x86_64 --headless --path source --export-release Web ../next-dist/index.html > evidence/export.log 2>&1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: two-storey-evidence
+          path: evidence/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: two-storey-web-preview
+          path: next-dist/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: two-storey-editable-model
+          path: source/art/two_storey_game.blend
