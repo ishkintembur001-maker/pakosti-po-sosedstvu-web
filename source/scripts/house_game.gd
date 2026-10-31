@@ -16,6 +16,9 @@ const CASES=[
  {"title":"Весь дом вверх дном", "floor":1,"kinds":[0,1,2,3],"targets":[Vector2(-4.1,1.1),Vector2(3.7,1.1),Vector2(0,1.1),Vector2(-1.2,1.1)]}]
 const NAMES=["Банан","Краска","Мыло","Конфетти"]
 const COLORS=[Color("e5bf43"),Color("9e48b7"),Color("76cadd"),Color("de8166")]
+var paused=false
+var stick_center=Vector2(108,426)
+var pending_target=Vector2.INF
 var index=0
 var floor_id=0
 var player_pos=Vector2(4.2,1.1)
@@ -67,6 +70,7 @@ var particles=[]
 var hud_script=preload("res://scripts/house_hud.gd")
 
 func _ready():
+ add_to_group("mobile_games")
  actor_source=MODEL.instantiate();add_child(actor_source)
  environment_root=actor_source.find_child("TwoStoreyHouse",true,false)
  var source_hero=actor_source.find_child("TricksterCharacter",true,false)
@@ -86,6 +90,7 @@ func _ready():
  for k in ["pickup","arm","prank","caught","victory"]:
   var p=AudioStreamPlayer.new();p.stream=load("res://assets/sfx/%s.wav"%k);p.bus="SFX";add_child(p);sfx[k]=p
  start_case(index)
+ var cfg=ConfigFile.new();cfg.load("user://pakosti_release.cfg");set_quality(bool(cfg.get_value("graphics","detail",not (OS.has_feature("web") or OS.has_feature("mobile")))))
 
 func make_slices(node:Node):
  if node is MeshInstance3D:
@@ -135,7 +140,7 @@ func cell(p:Vector2,f:int)->Vector2i:
 func path(a:Vector2,b:Vector2,f:int)->PackedVector2Array:return navs[f].get_point_path(cell(a,f),cell(b,f))
 func start_case(n:int):
  if is_instance_valid(hud) and is_instance_valid(hud.result):hud.result.queue_free();hud.result=null
- index=clampi(n,0,CASES.size()-1);floor_id=0;neighbor_floor=int(CASES[index].floor);player_pos=Vector2(4.2,1.1);neighbor_pos=Vector2(-4.1,1.1)
+ paused=false;pending_target=Vector2.INF;index=clampi(n,0,CASES.size()-1);floor_id=0;neighbor_floor=int(CASES[index].floor);player_pos=Vector2(4.2,1.1);neighbor_pos=Vector2(-4.1,1.1)
  for t in targets:t.node.queue_free()
  for t in supplies:t.node.queue_free()
  targets.clear();supplies.clear();inventory=[false,false,false,false];lives=3;caught=0;elapsed=0;action_time=0;stick=Vector2.ZERO;hidden=false;reaction=0;safe_time=4;alert=0;climbing=0;state="playing";player_path.clear();enemy_path.clear();waypoint=1
@@ -169,7 +174,7 @@ func near_stair()->bool:
  return player_pos.distance_to(Vector2(6.7,1.8) if floor_id==0 else Vector2(5.0,-2.15))<1.1
 func near_hide()->bool:return player_pos.distance_to(Vector2(-7.1,1.5))<1 or player_pos.distance_to(Vector2(3.25,2.5))<1
 func act():
- if state!="playing" or climbing>0:return
+ if paused or state!="playing" or climbing>0:return
  if hidden:hidden=false;return
  for s in supplies:
   if not s.taken and floor_id==s.floor and player_pos.distance_to(s.pos)<.95:
@@ -212,6 +217,7 @@ func clear_line(a:Vector2,b:Vector2,f:int)->bool:
   if blocked(a.lerp(b,float(i)/15),f):return false
  return true
 func _process(dt:float):
+ if paused:return
  if state=="won":animate(hero,0,99)
  elapsed+=dt;safe_time=maxf(0,safe_time-dt);action_time=maxf(0,action_time-dt)
  if state=="playing":
@@ -248,7 +254,7 @@ func move_player(dt:float):
  if Input.is_key_pressed(KEY_S):input.y+=1
  input=input.limit_length(1);var motion=Vector2.ZERO
  if input.length()>.1:
-  player_path.clear();motion=input;hidden=false
+  player_path.clear();pending_target=Vector2.INF;motion=input;hidden=false
  elif not player_path.is_empty():
   while not player_path.is_empty() and player_pos.distance_to(player_path[0])<.055:player_path.remove_at(0)
   if not player_path.is_empty():motion=(player_path[0]-player_pos).normalized()
@@ -259,6 +265,8 @@ func move_player(dt:float):
  hero.position=Vector3(player_pos.x,.2+floor_id*H,player_pos.y)
  if motion.length()>.1:hero.rotation.y=lerp_angle(hero.rotation.y,atan2(motion.x,motion.y),minf(1,dt*12))
  animate(hero,motion.length() if action_time<=0 else 0,-1 if action_time>0 else 0)
+ if pending_target!=Vector2.INF and player_pos.distance_to(pending_target)<.8:
+  pending_target=Vector2.INF;player_path.clear();act()
 func attach_animations(actor:Node3D,source_name:String):
  var source=actor_source.find_child("AnimationPlayer",true,false)
  if not source is AnimationPlayer:return
@@ -289,31 +297,50 @@ func animate(actor:Node3D,speed:float,pose:int):
   player.speed_scale=maxf(.65,speed) if clip=="walk" else 1.0
  actor.rotation.z=sin(elapsed*12)*.12 if pose in [1,3] else 0
 func set_quality(enabled:bool):
- quality=enabled;shadow.shadow_enabled=enabled;get_viewport().scaling_3d_scale=1 if enabled else .7
+ quality=enabled;shadow.shadow_enabled=enabled;get_viewport().scaling_3d_scale=1 if enabled else .75
+ var cfg=ConfigFile.new();cfg.load("user://pakosti_release.cfg");cfg.set_value("graphics","detail",enabled);cfg.save("user://pakosti_release.cfg")
 func click_world(p:Vector2):
- if state!="playing" or hidden or climbing>0:return
+ if paused or state!="playing" or climbing>0:return
+ if hidden:act();return
+ var closest=48.0;var selected=Vector2.INF
+ for item in supplies+targets:
+  if item.floor!=floor_id or (item.has("taken") and item.taken) or (item.has("used") and (item.used or item.armed)):continue
+  var screen=camera.unproject_position(Vector3(item.pos.x,.55+floor_id*H,item.pos.y))
+  var distance=screen.distance_to(p)
+  if distance<closest:closest=distance;selected=item.pos
+ if selected!=Vector2.INF:
+  pending_target=selected;player_path=path(player_pos,selected,floor_id);return
  var origin=camera.project_ray_origin(p);var direction=camera.project_ray_normal(p);var hit=Plane(Vector3.UP,.2+floor_id*H).intersects_ray(origin,direction)
- if hit!=null:player_path=path(player_pos,Vector2(hit.x,hit.z),floor_id)
+ if hit!=null:pending_target=Vector2.INF;player_path=path(player_pos,Vector2(hit.x,hit.z),floor_id)
 func handle_touch(i:int,p:Vector2,pressed:bool):
  if pressed:
-  if p.distance_to(Vector2(100,451))<84:stick_id=i;stick=(p-Vector2(100,451))/54.0;stick=stick.limit_length(1)
- else:
-  if i==stick_id:stick_id=-100;stick=Vector2.ZERO
+  if stick_id==-100 and p.distance_to(stick_center)<90:stick_id=i;stick=((p-stick_center)/58.0).limit_length(1);pending_target=Vector2.INF
+ elif i==stick_id:stick_id=-100;stick=Vector2.ZERO
 func _unhandled_input(e):
+ if paused:
+  if e is InputEventKey and e.pressed and e.keycode==KEY_ESCAPE and is_instance_valid(hud.pause_panel):hud.pause_panel.queue_free();hud.pause_panel=null;set_paused(false)
+  return
+ var s=get_viewport().get_visible_rect().size
  if e is InputEventScreenTouch:
   handle_touch(e.index,e.position,e.pressed)
-  if e.pressed and e.position.y<385:click_world(e.position)
- elif e is InputEventScreenDrag and e.index==stick_id:stick=((e.position-Vector2(100,451))/54.0).limit_length(1)
+  if e.pressed and e.index!=stick_id and e.position.y>100 and e.position.y<s.y-170:click_world(e.position)
+ elif e is InputEventScreenDrag and e.index==stick_id:stick=((e.position-stick_center)/58.0).limit_length(1)
  elif e is InputEventMouseButton and e.button_index==MOUSE_BUTTON_LEFT:
   handle_touch(-1,e.position,e.pressed)
-  if e.pressed and e.position.y<385:click_world(e.position)
- elif e is InputEventMouseMotion and stick_id==-1:stick=((e.position-Vector2(100,451))/54.0).limit_length(1)
+  if e.pressed and stick_id!=-1 and e.position.y>100 and e.position.y<s.y-170:click_world(e.position)
+ elif e is InputEventMouseMotion and stick_id==-1:stick=((e.position-stick_center)/58.0).limit_length(1)
  elif e is InputEventKey and e.pressed and not e.echo:
   if e.keycode in [KEY_E,KEY_SPACE]:act()
-  elif e.keycode==KEY_ESCAPE:menu_requested.emit()
+  elif e.keycode==KEY_ESCAPE:hud.show_pause()
   elif e.keycode==KEY_Q:set_quality(not quality)
+func set_paused(value:bool):
+ paused=value;stick=Vector2.ZERO;stick_id=-100;player_path.clear();pending_target=Vector2.INF
+ for actor in [hero,neighbor]:
+  if actor.has_meta("animation_player"):actor.get_meta("animation_player").speed_scale=0 if value else 1
 func _notification(what):
- if what==NOTIFICATION_APPLICATION_FOCUS_OUT:stick=Vector2.ZERO;stick_id=-100;player_path.clear()
+ if what==NOTIFICATION_APPLICATION_FOCUS_OUT:
+  set_paused(true)
+  if is_instance_valid(hud):hud.show_pause()
 
 func _exit_tree():
  for player in sfx.values():

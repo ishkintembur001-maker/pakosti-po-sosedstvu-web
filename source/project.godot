@@ -14,12 +14,17 @@ config/name="Пакости по соседству 3D"
 run/main_scene="res://scenes/release_menu.tscn"
 config/features=PackedStringArray("4.4", "GL Compatibility")
 
+[autoload]
+
+MobileShell="*res://scripts/mobile_shell.gd"
+
 [display]
 
 window/size/viewport_width=960
 window/size/viewport_height=540
 window/stretch/mode="canvas_items"
-window/stretch/aspect="keep"
+window/stretch/aspect="expand"
+window/handheld/orientation=6
 
 [input_devices]
 

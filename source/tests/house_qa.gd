@@ -34,12 +34,12 @@ func run():
   print("HOUSE_CASE_OK ",mission+1," simulated_frames=",frames)
  # Multitouch: action finger must not replace or release movement finger.
  if is_instance_valid(g.hud.result):g.hud.result.free();g.hud.result=null
- g.start_case(0);g.handle_touch(0,Vector2(135,451),true);check(g.stick_id==0 and g.stick.x>.5,"Joystick start failed")
+ g.start_case(0);g.handle_touch(0,g.stick_center+Vector2(40,0),true);check(g.stick_id==0 and g.stick.x>.5,"Joystick start failed")
  g.player_pos=g.supplies[0].pos
- var action_touch=InputEventScreenTouch.new();action_touch.index=1;action_touch.position=Vector2(820,480);action_touch.pressed=true;g.hud._input(action_touch)
+ var action_touch=InputEventScreenTouch.new();action_touch.index=1;action_touch.position=g.hud.action.get_global_rect().get_center();action_touch.pressed=true;g.hud._input(action_touch)
  check(g.supplies[0].taken,"Touch action button did not collect item")
  g.handle_touch(1,Vector2(820,480),true);g.handle_touch(1,Vector2(820,480),false);check(g.stick_id==0 and g.stick.x>.5,"Second finger cancelled joystick")
- g.handle_touch(0,Vector2(100,451),false);check(g.stick==Vector2.ZERO,"Joystick release failed")
+ g.handle_touch(0,g.stick_center,false);check(g.stick==Vector2.ZERO,"Joystick release failed")
  g.floor_id=1;g.player_pos=Vector2(5,-2.15);g.act();for f in range(190):g._process(1.0/60)
  check(g.floor_id==0 and not g.blocked(g.player_pos,0),"Stair descent failed")
  menu.return_menu();check(menu.panel.visible and menu.active_game==null,"Return to menu failed")

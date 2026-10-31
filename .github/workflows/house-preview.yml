@@ -34,7 +34,7 @@ jobs:
       - name: Verify gameplay and animations
         run: |
           tools/Godot_v4.4.1-stable_linux.x86_64 --headless --editor --path source --import --quit > evidence/import.log 2>&1
-          for test in episode_smoke mobile_qa house_qa animation_qa; do
+          for test in episode_smoke mobile_qa house_qa animation_qa mobile_layout_qa; do
             tools/Godot_v4.4.1-stable_linux.x86_64 --headless --audio-driver Dummy --path source --script res://tests/$test.gd > evidence/$test.log 2>&1
           done
           if grep -E 'SCRIPT ERROR|Parse Error|TEST_FAILED' evidence/*.log; then exit 1; fi
@@ -44,11 +44,14 @@ jobs:
           xvfb-run -a tools/Godot_v4.4.1-stable_linux.x86_64 --audio-driver Dummy --path source --script res://tests/house_pose_capture.gd > evidence/poses.log 2>&1
           xvfb-run -a tools/Godot_v4.4.1-stable_linux.x86_64 --audio-driver Dummy --path source --script res://tests/house_performance.gd > evidence/performance.log 2>&1
           tools/Godot_v4.4.1-stable_linux.x86_64 --headless --path source --export-release Web ../next-dist/index.html > evidence/export.log 2>&1
+          xvfb-run -a tools/Godot_v4.4.1-stable_linux.x86_64 --audio-driver Dummy --path source --script res://tests/mobile_capture.gd > evidence/mobile-capture.log 2>&1
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: two-storey-evidence
-          path: evidence/
+          path: |
+            evidence/
+            mobile-evidence/
       - uses: actions/upload-artifact@v4
         with:
           name: two-storey-web-preview
