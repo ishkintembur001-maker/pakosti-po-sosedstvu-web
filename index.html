@@ -109,7 +109,40 @@ body {
 			<div id="status-notice"></div>
 		</div>
 
-		<script src="index.js"></script>
+		<script>
+(function () {
+    const nativeFetch = window.fetch.bind(window);
+    let assembly = null;
+    const partNames = Array.from({length:42}, (_,i) => 'index.wasm.' + String(i).padStart(3,'0') + '.bin');
+
+    async function assembleWasm() {
+        const pieces = await Promise.all(partNames.map(async name => {
+            const result = await nativeFetch(name, {credentials:'same-origin'});
+            if (!result.ok) throw new Error('Ошибка загрузки части движка: ' + name);
+            return new Uint8Array(await result.arrayBuffer());
+        }));
+        const size = pieces.reduce((n,bytes) => n+bytes.byteLength,0);
+        if (size !== 43699190) throw new Error('Неверный размер движка: ' + size);
+        const merged = new Uint8Array(size);
+        let offset = 0;
+        for (const bytes of pieces) { merged.set(bytes,offset); offset+=bytes.byteLength; }
+        return merged.buffer;
+    }
+
+    window.fetch = function(input, options) {
+        const uri = typeof input === 'string' ? input : (input && input.url ? input.url : String(input));
+        if (/index\.wasm(?:[?#].*)?$/.test(uri)) {
+            if (!assembly) assembly = assembleWasm();
+            return assembly.then(buffer => new Response(buffer.slice(0), {
+                status:200,
+                headers:{'Content-Type':'application/wasm'}
+            }));
+        }
+        return nativeFetch(input,options);
+    };
+}());
+</script>
+<script src="index.js"></script>
 		<script>
 const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":12032,"index.wasm":43699190},"focusCanvas":true,"gdextensionLibs":[]};
 const GODOT_THREADS_ENABLED = false;
