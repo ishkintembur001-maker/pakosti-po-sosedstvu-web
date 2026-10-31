@@ -1,0 +1,7 @@
+source/.godot/
+source/art/textures/
+source/art/*.blend*
+source/assets/models/
+dist/
+tools/
+evidence/
