@@ -2,26 +2,23 @@ extends Node3D
 
 const HUD_SCRIPT = preload("res://scripts/hud_3d.gd")
 const CUSTOM_WORLD_PATH = "res://assets/models/apartment_cast.glb"
-const CUSTOM_CAST_PATH = "res://assets/models/cartoon_cast.glb"
+const CUSTOM_CAST_PATH = "res://assets/models/two_storey.glb"
 
 var imported_world: Node3D
+var imported_cast: Node3D
 
 func imported_actor(enemy: bool) -> Dictionary:
 	var avatar: Node3D
-	if is_instance_valid(imported_world):
-		var selected_name = "*NeighborCharacter*" if enemy else "*TricksterCharacter*"
-		var template = imported_world.find_child(selected_name, true, false)
-		if template is Node3D:
-			avatar = template.duplicate()
-	elif ResourceLoader.exists(CUSTOM_CAST_PATH):
+	if not is_instance_valid(imported_cast) and ResourceLoader.exists(CUSTOM_CAST_PATH):
 		var resource = load(CUSTOM_CAST_PATH)
-		if resource is PackedScene:
-			var instance = resource.instantiate()
-			var chosen_name = "*NeighborCharacter*" if enemy else "*TricksterCharacter*"
-			var selected = instance.find_child(chosen_name, true, false)
-			if selected is Node3D:
-				avatar = selected.duplicate()
-			instance.free()
+		if resource is PackedScene: imported_cast = resource.instantiate()
+	var template_name = "*NeighborCharacter*" if enemy else "*TricksterCharacter*"
+	if is_instance_valid(imported_cast):
+		var selected = imported_cast.find_child(template_name, true, false)
+		if selected is Node3D: avatar = selected.duplicate()
+	if not is_instance_valid(avatar) and is_instance_valid(imported_world):
+		var selected = imported_world.find_child(template_name, true, false)
+		if selected is Node3D: avatar = selected.duplicate()
 	if not is_instance_valid(avatar):
 		return {}
 	var root = Node3D.new()
@@ -31,6 +28,7 @@ func imported_actor(enemy: bool) -> Dictionary:
 	avatar.position = Vector3.ZERO
 	avatar.visible = true
 	root.set_meta("high_detail", true)
+	root.set_meta("enemy", enemy)
 	for part_name in ["Legs_L", "Legs_R", "Arm_L", "Arm_R"]:
 		var limb = avatar.find_child(part_name + "*", true, false)
 		if limb is Node3D:
@@ -181,7 +179,7 @@ func init_camera():
 	sun.name = "SoftSun"
 	sun.rotation_degrees = Vector3(-48, -28, 0)
 	sun.light_color = Color("#fff0d9")
-	sun.light_energy = 0.72
+	sun.light_energy = 0.22
 	sun.shadow_enabled = true
 	sun.directional_shadow_max_distance = 28.0
 	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
@@ -194,7 +192,7 @@ func init_camera():
 	sky.background_color = Color("#242c32")
 	sky.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	sky.ambient_light_color = Color("#dce7f6")
-	sky.ambient_light_energy = 0.36
+	sky.ambient_light_energy = 0.38
 	sky.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	env.environment = sky
 	add_child(env)
@@ -922,6 +920,7 @@ func animate_avatar(node: Node3D, speed: float, clock: float):
 		right_leg.rotation.x = - swing
 		left_arm.rotation.x = - swing
 		right_arm.rotation.x = swing
+	preload("res://scripts/cast_expressions.gd").apply(node, clock, bool(node.get_meta("enemy", false)), state == 2 or state == 4)
 	node.position.y = (absf(sin(clock * 10.2)) * 0.035 * speed)
 
 func spawn_comic_burst(where: Vector2, kind: int):
@@ -1125,3 +1124,6 @@ func set_performance_mode(enabled: bool):
 	var sun = get_node_or_null("SoftSun")
 	if sun is DirectionalLight3D: sun.shadow_enabled = not enabled
 	print("RENDER_QUALITY ", "smooth" if enabled else "detailed")
+
+func _exit_tree():
+	if is_instance_valid(imported_cast): imported_cast.free()

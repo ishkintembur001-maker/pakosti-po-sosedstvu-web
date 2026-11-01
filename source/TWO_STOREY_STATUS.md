@@ -10,7 +10,7 @@ Responsive landscape menu/HUD, large touch targets and left stick, tap-to-collec
 
 ## Characters
 
-Faces now use derived Blender Studio CC0 quad topology instead of assembled face primitives. The committed source collection and license are in art/source/. replace_faces.py fits the cap, forelocks, eyebrows, moustache and actual textured eyeballs. It adds Smile, Frown and Blink morphs, restores the teal long-sleeve hoodie and makes the hero shorter than the neighbor. Godot drives facial weights separately from the nine existing articulated body clips.
+Faces now use derived Blender Studio CC0 quad topology instead of assembled face primitives. The committed source collection and license are in art/source/. replace_faces.py fits the cap, forelocks, eyebrows, moustache and actual textured eyeballs. It adds Smile, Frown and Blink morphs, restores the teal long-sleeve hoodie and makes the hero shorter than the neighbor. Godot drives facial weights separately from the nine existing articulated body clips. The same new characters and shared expression controller are also used in all four classic episodes.
 
 These are basic part animations, not a finished full-body skeletal/finger rig or the 80-clip production design.
 
