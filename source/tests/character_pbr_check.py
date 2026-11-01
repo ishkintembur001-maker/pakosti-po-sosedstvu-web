@@ -10,11 +10,14 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 pairs = [
-    ("two_storey.glb", 4),
-    ("apartment_cast.glb", 4),
+    # The two-storey game exports nine authored clips from Blender.
+    ("two_storey.glb", 4, 9),
+    # Classic apartment is a static GLB; Godot drives classic actor motion,
+    # validated separately by the four-episode episode_smoke.gd suite.
+    ("apartment_cast.glb", 4, 0),
 ]
 total = 0
-for filename, minimum in pairs:
+for filename, minimum, expected_animations in pairs:
     path = os.path.join(ROOT, "assets", "models", filename)
     with open(path, "rb") as stream:
         header = stream.read(20)
@@ -36,8 +39,9 @@ for filename, minimum in pairs:
         raise AssertionError("%s: expected %d normal-mapped character materials, found %s" %
                              (filename, minimum, textured))
     animations = doc.get("animations", [])
-    if not animations:
-        raise AssertionError(filename + ": gameplay animation tracks missing")
+    if expected_animations and len(animations) < expected_animations:
+        raise AssertionError("%s: expected at least %d gameplay animations, got %d" %
+                             (filename, expected_animations, len(animations)))
     print("CHARACTER_GLTF_QA_OK", filename, "materials", len(textured),
           "animations", len(animations), flush=True)
     total += len(textured)
