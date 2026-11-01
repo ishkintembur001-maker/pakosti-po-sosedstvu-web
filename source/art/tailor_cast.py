@@ -69,7 +69,10 @@ def ribbon(name, path, widths, mat, parent, lift=.013):
     for idx in range(len(path)-1):
         for col in range(4):
             i=idx*5+col
-            faces.append((i,i+1,i+6,i+5))
+            # Rows run from shoulder to hem (descending Z). Reverse the quad
+            # winding so the outward face points toward -Y, the actor's front.
+            # The old winding pointed inward, yielding dark slit-like artifacts.
+            faces.append((i+5,i+6,i+1,i))
     return mesh_part(name,vertices,faces,mat,parent)
 
 def ring(name, center, rx, ry, z0, height, mat, parent, count=32, seam=0.0):
