@@ -89,6 +89,14 @@ def ring(name, center, rx, ry, z0, height, mat, parent, count=32, seam=0.0):
         faces.append((i,nxt,nxt+count,i+count))
     return mesh_part(name,verts,faces,mat,parent)
 
+def local_pivot(root, kind, side):
+    matches=[child for child in root.children
+             if child.type=="EMPTY" and child.name.startswith(kind+"_"+side)]
+    if len(matches)!=1:
+        raise RuntimeError("%s: expected exactly one %s_%s hinge, got %d" %
+                           (root.name, kind, side, len(matches)))
+    return matches[0]
+
 def detailed_hero(root):
     # Hoodie's chest and waist are elliptical lofts, front is negative Y.
     ring("Tailor_Hero_Hoodie_Waistband",(0,0),.305,.194,.628,.038,HOODIE,root,40,1.8)
@@ -107,11 +115,7 @@ def detailed_hero(root):
         ribbon("Tailor_Hero_PocketWrinkle_%02d"%idx,points,[.003,.035,.002],HOODIE,root,.011)
     # Cuffs and sleeve compression are parented to the exact shoulder hinges.
     for s in ("L","R"):
-        arm = root.children.get("Arm_"+s) if hasattr(root.children,"get") else None
-        if arm is None:
-            arm=bpy.data.objects.get("Arm_"+s)
-        if arm is None or arm.parent != root:
-            raise RuntimeError("Missing original shoulder pivot Arm_"+s)
+        arm=local_pivot(root,"Arm",s)
         sign=-1 if s=="L" else 1
         ring("Tailor_Hero_Cuff_"+s,(sign*.108,-.128),.094,.096,-.431,.042,HOODIE,arm,32,1.2)
         for n in range(3):
@@ -119,9 +123,7 @@ def detailed_hero(root):
             ribbon("Tailor_Hero_SleeveDart_%s_%d"%(s,n),
                    [(sign*.047,-.126,z+.031),(sign*.104,-.161,z),(sign*.165,-.126,z-.032)],
                    [.004,.018,.003],HOODIE,arm,.008)
-        leg=bpy.data.objects.get("Legs_"+s)
-        if leg is None or leg.parent!=root:
-            raise RuntimeError("Missing original hip pivot Legs_"+s)
+        leg=local_pivot(root,"Legs",s)
         ring("Tailor_Hero_DenimCuff_"+s,(0,-.007),.098,.098,-.474,.045,DENIM,leg,32,.5)
         for n in range(2):
             ribbon("Tailor_Hero_KneeDrape_%s_%d"%(s,n),
@@ -144,15 +146,12 @@ def detailed_neighbor(root):
             [(sign*.392,-.198,.665),(sign*.364,-.285,.564),
              (sign*.329,-.305,.470),(sign*.309,-.276,.402)],
             [.007,.039,.027,.003],ROBE,root,.025)
-        arm=bpy.data.objects.get("Arm_L" if sign==-1 else "Arm_R")
-        if arm is None or arm.parent!=root:
-            raise RuntimeError("Missing original neighbor shoulder hinge")
+        arm=local_pivot(root,"Arm","L" if sign==-1 else "R")
         ring("Tailor_Neighbor_RobeSleeveCuff_%d"%idx,(sign*.102,-.068),.131,.134,-.315,.055,ROBE,arm,32,1.0)
         ribbon("Tailor_Neighbor_RobeSleeveFold_%d"%idx,
             [(sign*.036,-.169,-.113),(sign*.104,-.185,-.188),(sign*.160,-.148,-.261)],
             [.007,.035,.007],ROBE,arm,.021)
-        leg=bpy.data.objects.get("Legs_L" if sign==-1 else "Legs_R")
-        if leg is None or leg.parent!=root:raise RuntimeError("Missing hip hinge")
+        leg=local_pivot(root,"Legs","L" if sign==-1 else "R")
         ring("Tailor_Neighbor_ShortsCuff_%d"%idx,(0,0),.188,.193,-.268,.040,ROBE,leg,32,0.2)
     # Subtle fasteners above the robe belt: constructed circles, not painted marks.
     for idx,z in enumerate((1.075,1.010,.947)):
