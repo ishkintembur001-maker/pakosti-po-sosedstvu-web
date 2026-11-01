@@ -17,10 +17,14 @@ func run():
  check(is_instance_valid(menu.active_game),"Menu screen touch did not launch game")
  var g=menu.active_game;g.set_process(false)
  check(g.CASES.size()==24,"Expected 24 playable challenge variants")
+ for level in range(24):
+  g.start_case(level)
+  check(g.targets.size()>=4 and g.targets.size()<=8,"Expected 4–8 pranks per mission")
+  check(g.targets.size()==g.supplies.size(),"Each prank needs a corresponding item")
  for mission in range(8):
   g.start_case(mission)
   for item in g.supplies:
-   check(walk(g,item.pos),"Supply unreachable in case %d kind %d"%[mission,item.kind]);g.act();check(item.taken and g.inventory[item.kind],"Pickup failed")
+   check(walk(g,item.pos),"Supply unreachable in case %d kind %d"%[mission,item.kind]);g.act();check(item.taken and g.inventory[item.kind]>0,"Pickup failed")
   if g.neighbor_floor==1:
    check(walk(g,Vector2(6.7,1.8)),"Stair entrance unreachable");g.act();check(g.climbing>0,"Stairs action failed")
    for frame in range(190):g._process(1.0/60)

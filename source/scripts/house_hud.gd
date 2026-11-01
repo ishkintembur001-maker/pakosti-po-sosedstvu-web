@@ -52,7 +52,7 @@ func refresh():
  else:objective.text="ЦЕЛЬ: ДОЖДАТЬСЯ РЕАКЦИЙ %d/%d   /   ЖИЗНИ %d"%[done,game.targets.size(),game.lives]
  var items=[]
  for i in range(4):
-  if game.inventory[i]:items.append(game.NAMES[i])
+  if game.inventory[i]>0:items.append("%s×%d"%[game.NAMES[i],game.inventory[i]])
  bag.text="РЮКЗАК: "+(", ".join(items) if not items.is_empty() else "пусто")+"   •   РЕАКЦИИ %d/%d"%[done,game.targets.size()]
  action.visible=game.escape_ready and game.state=="playing"
  action.disabled=game.climbing>0 or game.paused

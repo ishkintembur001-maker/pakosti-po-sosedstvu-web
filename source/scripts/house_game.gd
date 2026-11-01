@@ -8,6 +8,8 @@ const MODEL=preload("res://assets/models/two_storey.glb")
 const CUTAWAY_SHADER=preload("res://shaders/cutaway.gdshader")
 const CONTACT_SHADER=preload("res://shaders/contact_shadow.gdshader")
 const EXIT_POS=Vector2(4.2,1.1)
+const TRAP_SPOTS=[Vector2(-4.1,1.1),Vector2(-3.2,1.1),Vector2(-2.25,1.1),Vector2(-1.2,1.1),Vector2(0,1.1),Vector2(1.1,1.1),Vector2(2.2,1.1),Vector2(3.7,1.1)]
+const SUPPLY_SPOTS=[Vector2(-6.55,1.85),Vector2(-4.85,1.85),Vector2(-3.35,1.85),Vector2(-1.85,1.85),Vector2(-.45,1.85),Vector2(1.4,1.85),Vector2(3.5,1.85),Vector2(5.25,1.85)]
 const CASES=[
  {"title":"Первый след", "floor":0,"kinds":[0],"targets":[Vector2(-4.1,1.1)]},
  {"title":"Красочный приём", "floor":0,"kinds":[1],"targets":[Vector2(3.7,1.1)]},
@@ -54,7 +56,7 @@ var camera:Camera3D
 var actor_source:Node3D
 var targets=[]
 var supplies=[]
-var inventory=[false,false,false,false]
+var inventory=[0,0,0,0]
 var navs=[]
 var player_path=PackedVector2Array()
 var enemy_path=PackedVector2Array()
@@ -209,12 +211,21 @@ func start_case(n:int):
  for t in targets:t.node.queue_free()
  for t in supplies:t.node.queue_free()
  targets.clear();supplies.clear();if is_instance_valid(exit_marker):exit_marker.queue_free()
- inventory=[false,false,false,false];lives=3;caught=0;elapsed=0;action_time=0;stick=Vector2.ZERO;hidden=false;reaction=0;safe_time=4;alert=0;climbing=0;state="playing";player_path.clear();enemy_path.clear();waypoint=1
- for i in range(CASES[index].kinds.size()):
-  var kind=CASES[index].kinds[i];var p:Vector2=CASES[index].targets[i]
+ inventory=[0,0,0,0];lives=3;caught=0;elapsed=0;action_time=0;stick=Vector2.ZERO;hidden=false;reaction=0;safe_time=4;alert=0;climbing=0;state="playing";player_path.clear();enemy_path.clear();waypoint=1
+ var mission_points=CASES[index].targets.duplicate()
+ var total=mini(8,4+int(index/4))
+ for spot in TRAP_SPOTS:
+  if mission_points.size()>=total:break
+  var separated=true
+  for prior in mission_points:
+   if prior.distance_to(spot)<.74:separated=false;break
+  if separated:mission_points.append(spot)
+ for i in range(mission_points.size()):
+  var kind=int(CASES[index].kinds[i]) if i<CASES[index].kinds.size() else (index+i)%4
+  var p:Vector2=mission_points[i]
   var marker=make_marker(p,neighbor_floor,kind,false)
   targets.append({"kind":kind,"pos":p,"floor":neighbor_floor,"armed":false,"used":false,"node":marker})
-  var supply_pos=[Vector2(4.2,2.45),Vector2(3.3,.25),Vector2(5.1,.2),Vector2(5.2,2.35)][i]
+  var supply_pos=SUPPLY_SPOTS[i]
   var supply=make_marker(supply_pos,0,kind,true)
   supplies.append({"kind":kind,"pos":supply_pos,"floor":0,"taken":false,"node":supply})
  exit_marker=make_exit_marker();exit_marker.hide()
@@ -267,7 +278,7 @@ func hint()->String:
  for s in supplies:
   if not s.taken and floor_id==s.floor and player_pos.distance_to(s.pos)<.95:return "ВЗЯТЬ: "+NAMES[s.kind]
  for t in targets:
-  if not t.used and not t.armed and floor_id==t.floor and player_pos.distance_to(t.pos)<.95:return ("УСТАНОВИТЬ: " if inventory[t.kind] else "НАЙДИ: ")+NAMES[t.kind]
+  if not t.used and not t.armed and floor_id==t.floor and player_pos.distance_to(t.pos)<.95:return ("УСТАНОВИТЬ: " if inventory[t.kind]>0 else "НАЙДИ: ")+NAMES[t.kind]
  if near_stair():return "ПОДНЯТЬСЯ" if floor_id==0 else "СПУСТИТЬСЯ"
  if near_hide():return "СПРЯТАТЬСЯ"
  return "ДЕЙСТВИЕ"
@@ -279,10 +290,10 @@ func act():
  if hidden:hidden=false;return
  for s in supplies:
   if not s.taken and floor_id==s.floor and player_pos.distance_to(s.pos)<.95:
-   s.taken=true;s.node.hide();inventory[s.kind]=true;play("pickup");action_time=.55;return
+   s.taken=true;s.node.hide();inventory[s.kind]+=1;play("pickup");action_time=.55;return
  for t in targets:
   if not t.used and not t.armed and floor_id==t.floor and player_pos.distance_to(t.pos)<.95:
-   if inventory[t.kind]:t.armed=true;inventory[t.kind]=false;play("arm");action_time=.8
+   if inventory[t.kind]>0:t.armed=true;inventory[t.kind]-=1;play("arm");action_time=.8
    return
  if near_stair():start_climb();return
  if near_hide():hidden=true;player_path.clear()
