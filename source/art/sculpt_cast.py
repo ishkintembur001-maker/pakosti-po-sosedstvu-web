@@ -29,7 +29,25 @@ def face_sculpt(ob,enemy):
                   gauss(x,-.258 if enemy else -.222,.117))
         depth=(.023 if enemy else .018)*cheek*gauss(z,1.61 if enemy else 1.52,.125)*falloff
         jaw=.006*gauss(abs(x),.19,.17)*gauss(z,1.45 if enemy else 1.36,.11)*falloff
-        delta=Vector((0,-(depth+jaw)*(1.0 if enemy else (1.05 if x>0 else .95)),0))
+        # Reference-quality primary forms are geometry, not facial decals.
+        # Negative Y points out of the face (towards the gameplay camera).
+        front=max(0.0,min(1.0,(-y-.065)/.22))
+        nose_center=1.630 if enemy else 1.548
+        nose_bridge=gauss(x,0,.094)*gauss(z,nose_center+.055,.119)
+        nose_tip=gauss(x,0,.089)*gauss(z,nose_center-.024,.061)
+        nasal_wings=max(gauss(x,.091,.037),gauss(x,-.091,.037))*gauss(z,nose_center-.046,.057)
+        nose_relief=(.033 if enemy else .028)*nose_bridge+(.046 if enemy else .034)*nose_tip+(.011 if enemy else .008)*nasal_wings
+        cheek_y=1.606 if enemy else 1.520
+        cheek_mass=max(gauss(x,.202 if enemy else .183,.120),gauss(x,-.202 if enemy else -.183,.120))
+        cheek_forward=(.034 if enemy else .025)*cheek_mass*gauss(z,cheek_y,.107)
+        lower_lip=(.014 if enemy else .009)*gauss(x,0,.125)*gauss(z,1.452 if enemy else 1.397,.037)
+        chin=(.023 if enemy else .012)*gauss(x,0,.170)*gauss(z,1.376 if enemy else 1.335,.084)
+        brow_ridge=(.019 if enemy else .010)*max(gauss(x,.136,.092),gauss(x,-.136,.092))*gauss(z,1.790 if enemy else 1.722,.060)
+        forward=min(.079,front*(nose_relief+cheek_forward+lower_lip+chin+brow_ridge))
+        delta=Vector((0,-(depth+jaw)*(1.0 if enemy else (1.05 if x>0 else .95))-forward,0))
+        # Widen the stocky neighbor's jaw and taper the boy's lower face.
+        jaw_profile=gauss(z,1.417 if enemy else 1.356,.146)*gauss(abs(x),.215,.188)*front
+        delta.x+=(.075 if enemy else -.060)*x*jaw_profile
         if delta.length<.000001:continue
         for block in blocks:block.data[i].co=Vector(block.data[i].co)+delta
         hits+=1
@@ -41,7 +59,9 @@ def face_sculpt(ob,enemy):
             raise AssertionError("Blink morph altered")
     if hits<80:raise RuntimeError("Face sculpt region too small "+ob.name)
     ob.data.update()
-    print("SCULPT_FACE_OK",ob.name,hits,flush=True)
+    ob["premium_primary_face_sculpt"]="nose_bridge cheek_volume brow_and_jaw_profile"
+    ob["sculpted_form_count"]=hits
+    print("PRIMARY_FACE_FORMS_OK",ob.name,hits,"nose cheek chin brow jaw",flush=True)
 def deform_outfit(actor,enemy):
     material="Burgundy plaid robe" if enemy else "Petrol knit cotton"
     targets=[o for o in actor.children if o.type=="MESH" and any(m and m.name.startswith(material) for m in o.data.materials)]
