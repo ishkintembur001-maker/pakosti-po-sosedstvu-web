@@ -4,7 +4,6 @@ extends CanvasLayer
 var overlay:Control
 var heading:Label
 var body:Label
-var fullscreen:Button
 var was_portrait=false
 var frozen={}
 func _ready():
@@ -13,11 +12,7 @@ func _ready():
  var bg=ColorRect.new();bg.color=Color("101f25");bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);overlay.add_child(bg)
  heading=Label.new();heading.text="ПОВЕРНИ ТЕЛЕФОН";heading.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER;heading.add_theme_font_size_override("font_size",52);heading.modulate=Color("f4d192");overlay.add_child(heading)
  body=Label.new();body.text="Играй двумя руками\nСтик слева, действие справа\n\nИграем в горизонтальном режиме";body.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER;body.add_theme_font_size_override("font_size",34);overlay.add_child(body)
- fullscreen=Button.new();fullscreen.text="НА ВЕСЬ ЭКРАН";fullscreen.add_theme_font_size_override("font_size",30);fullscreen.pressed.connect(request_fullscreen);overlay.add_child(fullscreen)
  _process(0)
-static func request_fullscreen():
- if OS.has_feature("web"):
-  JavaScriptBridge.eval("(function(){var el=document.documentElement;try{var p=el.requestFullscreen?el.requestFullscreen():null;if(p)p.then(function(){if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(function(){});}).catch(function(){});}catch(e){}})();")
 func _process(_dt):
  var size=get_viewport().get_visible_rect().size
  var portrait=size.y>size.x
@@ -25,7 +20,6 @@ func _process(_dt):
  if portrait:
   heading.position=Vector2(32,size.y*.32);heading.size=Vector2(size.x-64,80)
   body.position=Vector2(32,size.y*.32+120);body.size=Vector2(size.x-64,230)
-  fullscreen.position=Vector2(80,size.y*.32+390);fullscreen.size=Vector2(size.x-160,116)
  for game in get_tree().get_nodes_in_group("mobile_games"):
   var id=game.get_instance_id()
   if portrait and not frozen.has(id):frozen[id]=game.process_mode;game.process_mode=Node.PROCESS_MODE_DISABLED
