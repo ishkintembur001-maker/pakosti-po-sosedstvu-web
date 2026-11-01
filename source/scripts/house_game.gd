@@ -70,6 +70,8 @@ var hero_contact:MeshInstance3D
 var neighbor_contact:MeshInstance3D
 var slice_materials=[]
 var shadow:DirectionalLight3D
+var warm_room_key:OmniLight3D
+var cool_room_fill:OmniLight3D
 var sfx={}
 var particles=[]
 var hud_script=preload("res://scripts/house_hud.gd")
@@ -95,6 +97,18 @@ func _ready():
  camera=Camera3D.new();camera.projection=Camera3D.PROJECTION_ORTHOGONAL;camera.size=7.9;add_child(camera);camera.current=true
  shadow=DirectionalLight3D.new();shadow.rotation_degrees=Vector3(-55,-25,0);shadow.light_color=Color("fff4e5");shadow.light_energy=.22;shadow.shadow_enabled=true;shadow.directional_shadow_max_distance=32;add_child(shadow)
  var env=WorldEnvironment.new();var e=Environment.new();e.background_mode=Environment.BG_COLOR;e.background_color=Color("202a2e");e.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR;e.ambient_light_color=Color("d1e0e4");e.ambient_light_energy=.38;e.tonemap_mode=Environment.TONE_MAPPER_FILMIC;env.environment=e;add_child(env)
+ # Two unshadowed local practical lights add depth to faces and the furnished rooms.
+ # These keep the Web Compatibility renderer usable on mobile Safari.
+ warm_room_key=OmniLight3D.new();warm_room_key.name="WarmRoomKey"
+ warm_room_key.position=Vector3(-2.9,3.0,3.2)
+ warm_room_key.light_color=Color("ffdfbb");warm_room_key.light_energy=.48
+ warm_room_key.omni_range=11.0;warm_room_key.omni_attenuation=1.8
+ warm_room_key.shadow_enabled=false;add_child(warm_room_key)
+ cool_room_fill=OmniLight3D.new();cool_room_fill.name="CoolRoomFill"
+ cool_room_fill.position=Vector3(3.5,3.6,-1.2)
+ cool_room_fill.light_color=Color("d0e4f5");cool_room_fill.light_energy=.19
+ cool_room_fill.omni_range=9.5;cool_room_fill.omni_attenuation=1.8
+ cool_room_fill.shadow_enabled=false;add_child(cool_room_fill)
  var canvas=CanvasLayer.new();add_child(canvas);hud=hud_script.new();hud.game=self;canvas.add_child(hud)
  for k in ["pickup","arm","prank","caught","victory"]:
   var p=AudioStreamPlayer.new();p.stream=load("res://assets/sfx/%s.wav"%k);p.bus="SFX";add_child(p);sfx[k]=p
@@ -248,6 +262,12 @@ func clear_line(a:Vector2,b:Vector2,f:int)->bool:
  return true
 func _process(dt:float):
  if paused:return
+ # Keep soft accent lighting on the currently visible house floor, including
+ # when the character uses the stairway. No extra dynamic shadows on iPhone.
+ if is_instance_valid(warm_room_key):
+  warm_room_key.position.y=3.0+floor_id*H
+ if is_instance_valid(cool_room_fill):
+  cool_room_fill.position.y=3.6+floor_id*H
  if state=="won":animate(hero,0,99)
  elapsed+=dt;safe_time=maxf(0,safe_time-dt);action_time=maxf(0,action_time-dt)
  if state=="playing":
@@ -331,6 +351,9 @@ func animate(actor:Node3D,speed:float,pose:int):
  actor.rotation.z=sin(elapsed*12)*.12 if pose in [1,3] else 0
 func set_quality(enabled:bool):
  quality=enabled;shadow.shadow_enabled=enabled;get_viewport().scaling_3d_scale=1 if enabled else .75
+ # Smooth mode uses lower-cost unshadowed local lighting; detailed mode retains depth.
+ if is_instance_valid(warm_room_key):warm_room_key.light_energy=.48 if enabled else .32
+ if is_instance_valid(cool_room_fill):cool_room_fill.light_energy=.19 if enabled else .11
  get_viewport().msaa_3d=Viewport.MSAA_2X if enabled else Viewport.MSAA_DISABLED
  for sm in slice_materials:sm.set_shader_parameter("detail_normals",enabled)
  var cfg=ConfigFile.new();cfg.load("user://pakosti_release.cfg");cfg.set_value("graphics","detail",enabled);cfg.save("user://pakosti_release.cfg")
