@@ -16,6 +16,7 @@ func run():
  var launch_touch=InputEventScreenTouch.new();launch_touch.index=0;launch_touch.position=Vector2(200,257);launch_touch.pressed=true;menu._input(launch_touch)
  check(is_instance_valid(menu.active_game),"Menu screen touch did not launch game")
  var g=menu.active_game;g.set_process(false)
+ check(g.CASES.size()==24,"Expected 24 playable challenge variants")
  for mission in range(8):
   g.start_case(mission)
   for item in g.supplies:
@@ -28,18 +29,29 @@ func run():
    check(walk(g,trap.pos),"Trap unreachable in case %d"%mission);g.act();check(trap.armed,"Arming failed")
   # Exercise real patrol and trap collision; no direct finish_prank call.
   g.hidden=true;g.safe_time=999;var frames=0
-  while g.state=="playing" and frames<24000:
+  while not g.escape_ready and frames<24000:
    g.elapsed+=1.0/60;g.tick_enemy(1.0/60);frames+=1
-  check(g.state=="won","Patrol did not trigger every trap in case %d"%mission)
+  check(g.escape_ready,"Patrol did not trigger every trap in case %d"%mission)
+  g.guide_to_exit()
+  for step in range(1800):
+   if g.state!="playing":break
+   g._process(1.0/60)
+  check(g.state=="won","Failed to navigate to the safe exit in case %d"%mission)
   print("HOUSE_CASE_OK ",mission+1," simulated_frames=",frames)
- # Multitouch: action finger must not replace or release movement finger.
+ # One touch chooses a goal and walks to collect it, without a joystick.
  if is_instance_valid(g.hud.result):g.hud.result.free();g.hud.result=null
- g.start_case(0);g.handle_touch(0,g.stick_center+Vector2(40,0),true);check(g.stick_id==0 and g.stick.x>.5,"Joystick start failed")
- g.player_pos=g.supplies[0].pos
- var action_touch=InputEventScreenTouch.new();action_touch.index=1;action_touch.position=g.hud.action.get_global_rect().get_center();action_touch.pressed=true;g.hud._input(action_touch)
- check(g.supplies[0].taken,"Touch action button did not collect item")
- g.handle_touch(1,Vector2(820,480),true);g.handle_touch(1,Vector2(820,480),false);check(g.stick_id==0 and g.stick.x>.5,"Second finger cancelled joystick")
- g.handle_touch(0,g.stick_center,false);check(g.stick==Vector2.ZERO,"Joystick release failed")
+ g.start_case(0);g._process(0)
+ var supply=g.supplies[0]
+ var screen=g.camera.unproject_position(Vector3(supply.pos.x,.55,supply.pos.y))
+ var touch=InputEventScreenTouch.new();touch.index=0;touch.position=screen;touch.pressed=true
+ g._unhandled_input(touch)
+ check(g.pending_action=="interact","One-tap pickup did not set automatic interaction")
+ for frame in range(650):g.action_time=maxf(0,g.action_time-1.0/60);g.move_player(1.0/60)
+ check(supply.taken,"One-tap pickup did not collect the item")
+ for mission in range(8,24):
+  g.start_case(mission)
+  check(g.targets.size()==g.supplies.size() and g.targets.size()>0,"New challenge has no playable targets")
+ check(not g.hud.action.visible,"Exit button shown before all traps complete")
  g.floor_id=1;g.player_pos=Vector2(5,-2.15);g.act();for f in range(190):g._process(1.0/60)
  check(g.floor_id==0 and not g.blocked(g.player_pos,0),"Stair descent failed")
  menu.return_menu();check(menu.panel.visible and menu.active_game==null,"Return to menu failed")

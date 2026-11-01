@@ -9,9 +9,9 @@ func run():
  for dims in [Vector2i(960,540),Vector2i(1169,540),Vector2i(1289,540)]:
   root.size=dims;await process_frame;g.hud.layout()
   var r=g.hud.action.get_global_rect();check(r.position.x>dims.x*.6 and r.end.x<dims.x,"Action button off safe edge")
-  check(r.size.y>=90,"Touch action too small");check(g.stick_center.x>=100 and g.stick_center.y<dims.y-70,"Joystick outside safe area")
+  check(r.size.y>=70,"Exit action too small");check(not g.hud.action.visible,"Exit button must stay hidden before completion")
   check(g.hud.top.position.x>=28,"Title outside safe area")
-  print("MOBILE_LAYOUT_OK ",dims," action=",r," stick=",g.stick_center)
+  print("MOBILE_LAYOUT_OK ",dims," exit_button=",r)
  # Pause freezes real patrol and timer; GUI resumes without losing scene.
  g.hud.show_pause();var pos=g.neighbor_pos;var time=g.elapsed;g._process(3)
  check(g.paused and g.neighbor_pos==pos and g.elapsed==time,"Pause advanced gameplay")

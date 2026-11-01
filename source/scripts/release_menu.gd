@@ -24,7 +24,7 @@ func _ready():
  continue_button=mobile_button("ИГРАТЬ",func():menu_action(0));continue_button.name="Play"
  var cases=mobile_button("ЗАДАНИЯ",func():menu_action(2));cases.name="Cases"
  var options=mobile_button("НАСТРОЙКИ",func():menu_action(3));options.name="Options"
- var caption=Label.new();caption.name="BuildCaption";caption.text="ТЕСТОВАЯ СБОРКА  /  8 ИСПЫТАНИЙ";caption.add_theme_font_size_override("font_size",16);caption.modulate=Color("a5bbb6");panel.add_child(caption)
+ var caption=Label.new();caption.name="BuildCaption";caption.text="ТЕСТОВАЯ СБОРКА  /  24 ИСПЫТАНИЯ";caption.add_theme_font_size_override("font_size",16);caption.modulate=Color("a5bbb6");panel.add_child(caption)
  layout_menu()
 func mobile_button(text:String,callback:Callable)->Button:
  var b=Button.new();b.text=text;b.focus_mode=Control.FOCUS_NONE;b.add_theme_font_size_override("font_size",24)
@@ -71,9 +71,10 @@ func close_button(box:VBoxContainer):
  var b=Button.new();b.text="НАЗАД";b.custom_minimum_size.y=68;b.pressed.connect(dismiss);box.add_child(b)
 func open_cases():
  settings.load(SAVE);var unlocked=int(settings.get_value("house","unlocked",0));var box=dialog("ВЫБЕРИ ИСПЫТАНИЕ")
- var grid=GridContainer.new();grid.columns=2;grid.add_theme_constant_override("h_separation",10);grid.add_theme_constant_override("v_separation",8);box.add_child(grid)
- for i in range(8):
-  var b=Button.new();b.text="%02d  %s"%[i+1,preload("res://scripts/house_game.gd").CASES[i].title];b.disabled=i>unlocked;b.custom_minimum_size=Vector2(318,70);b.add_theme_font_size_override("font_size",18);b.clip_text=true;grid.add_child(b);var selected=i;b.pressed.connect(func():start_house(selected))
+ var scroll=ScrollContainer.new();scroll.custom_minimum_size=Vector2(660,290);scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED;box.add_child(scroll)
+ var grid=GridContainer.new();grid.columns=2;grid.add_theme_constant_override("h_separation",10);grid.add_theme_constant_override("v_separation",8);scroll.add_child(grid)
+ for i in range(preload("res://scripts/house_game.gd").CASES.size()):
+  var b=Button.new();b.text="%02d  %s"%[i+1,preload("res://scripts/house_game.gd").CASES[i].title];b.disabled=i>unlocked;b.custom_minimum_size=Vector2(318,65);b.add_theme_font_size_override("font_size",18);b.clip_text=true;grid.add_child(b);var selected=i;b.pressed.connect(func():start_house(selected))
  var row=HBoxContainer.new();row.add_theme_constant_override("separation",12);box.add_child(row)
  var classic=Button.new();classic.text="КЛАССИЧЕСКИЕ УРОВНИ";classic.custom_minimum_size=Vector2(318,68);classic.pressed.connect(start_classic);row.add_child(classic)
  var back=Button.new();back.text="НАЗАД";back.custom_minimum_size=Vector2(318,68);back.pressed.connect(dismiss);row.add_child(back)
@@ -86,7 +87,7 @@ func open_settings():
    if k==0:music_level=value
    else:sfx_level=value
    save_settings())
- var help=Label.new();help.text="Стик слева — ходьба. Кнопка справа — действие.\nНажми на предмет, чтобы подойти и подобрать.\nПрогресс сохраняется автоматически.";help.add_theme_font_size_override("font_size",15);box.add_child(help)
+ var help=Label.new();help.text="Одно касание пола — герой идёт к точке.\nКоснись предмета, ловушки или лестницы для действия.\nПосле последней пакости нажми «К ВЫХОДУ».\nПрогресс сохраняется автоматически.";help.add_theme_font_size_override("font_size",15);box.add_child(help)
  close_button(box)
 func start_house(i:int):
  dismiss();ensure_music();settings.load(SAVE);var unlocked=int(settings.get_value("house","unlocked",0));i=clampi(i,0,unlocked);settings.set_value("house","last",i);settings.save(SAVE)

@@ -7,6 +7,7 @@ const STAIR_TOP=Vector2(6.8,-1.8)
 const MODEL=preload("res://assets/models/two_storey.glb")
 const CUTAWAY_SHADER=preload("res://shaders/cutaway.gdshader")
 const CONTACT_SHADER=preload("res://shaders/contact_shadow.gdshader")
+const EXIT_POS=Vector2(4.2,1.1)
 const CASES=[
  {"title":"Первый след", "floor":0,"kinds":[0],"targets":[Vector2(-4.1,1.1)]},
  {"title":"Красочный приём", "floor":0,"kinds":[1],"targets":[Vector2(3.7,1.1)]},
@@ -15,12 +16,32 @@ const CASES=[
  {"title":"Пена на втором этаже", "floor":1,"kinds":[2],"targets":[Vector2(0,1.1)]},
  {"title":"Тапки с сюрпризом", "floor":1,"kinds":[0,3],"targets":[Vector2(-4.1,1.1),Vector2(3.7,1.1)]},
  {"title":"Два этажа хлопот", "floor":1,"kinds":[0,1,2],"targets":[Vector2(-4.1,1.1),Vector2(3.7,1.1),Vector2(0,1.1)]},
- {"title":"Весь дом вверх дном", "floor":1,"kinds":[0,1,2,3],"targets":[Vector2(-4.1,1.1),Vector2(3.7,1.1),Vector2(0,1.1),Vector2(-1.2,1.1)]}]
+ {"title":"Весь дом вверх дном", "floor":1,"kinds":[0,1,2,3],"targets":[Vector2(-4.1,1.1),Vector2(3.7,1.1),Vector2(0,1.1),Vector2(-1.2,1.1)]},
+ {"title":"Банановый рейд","floor":0,"kinds":[0,3],"targets":[Vector2(-4.1,1.1),Vector2(3.7,1.1)],
+ {"title":"Мыло и краска","floor":0,"kinds":[2,1],"targets":[Vector2(0,1.1),Vector2(3.7,1.1)],
+ {"title":"Сюрприз в прихожей","floor":0,"kinds":[3,0],"targets":[Vector2(-1.2,1.1),Vector2(-4.1,1.1)],
+ {"title":"Переполох на кухне","floor":0,"kinds":[1,2,0],"targets":[Vector2(3.7,1.1),Vector2(0,1.1),Vector2(-4.1,1.1)],
+ {"title":"Охота за тремя ловушками","floor":0,"kinds":[3,1,2],"targets":[Vector2(-1.2,1.1),Vector2(3.7,1.1),Vector2(0,1.1)],
+ {"title":"Коридор сюрпризов","floor":0,"kinds":[0,2,3],"targets":[Vector2(-4.1,1.1),Vector2(0,1.1),Vector2(3.7,1.1)],
+ {"title":"Тайная комбинация","floor":0,"kinds":[1,3,0,2],"targets":[Vector2(3.7,1.1),Vector2(-1.2,1.1),Vector2(-4.1,1.1),Vector2(0,1.1)],
+ {"title":"Ночная пакость","floor":0,"kinds":[2,0,1,3],"targets":[Vector2(0,1.1),Vector2(-4.1,1.1),Vector2(3.7,1.1),Vector2(-1.2,1.1)],
+ {"title":"След на втором этаже","floor":1,"kinds":[0,1],"targets":[Vector2(-4.1,1.1),Vector2(3.7,1.1)],
+ {"title":"Мыльная ловушка","floor":1,"kinds":[2,3],"targets":[Vector2(0,1.1),Vector2(-1.2,1.1)],
+ {"title":"Тихая операция","floor":1,"kinds":[1,0],"targets":[Vector2(3.7,1.1),Vector2(-4.1,1.1)],
+ {"title":"Пена и конфетти","floor":1,"kinds":[2,3,1],"targets":[Vector2(0,1.1),Vector2(-1.2,1.1),Vector2(3.7,1.1)],
+ {"title":"Рискованный маршрут","floor":1,"kinds":[0,2,1],"targets":[Vector2(-4.1,1.1),Vector2(0,1.1),Vector2(3.7,1.1)],
+ {"title":"Тройной сюрприз","floor":1,"kinds":[3,1,0],"targets":[Vector2(-1.2,1.1),Vector2(3.7,1.1),Vector2(-4.1,1.1)],
+ {"title":"Через две лестницы","floor":1,"kinds":[0,1,2,3],"targets":[Vector2(-4.1,1.1),Vector2(3.7,1.1),Vector2(0,1.1),Vector2(-1.2,1.1)],
+ {"title":"Большой финал","floor":1,"kinds":[3,2,0,1],"targets":[Vector2(-1.2,1.1),Vector2(0,1.1),Vector2(-4.1,1.1),Vector2(3.7,1.1)]]
 const NAMES=["Банан","Краска","Мыло","Конфетти"]
 const COLORS=[Color("e5bf43"),Color("9e48b7"),Color("76cadd"),Color("de8166")]
 var paused=false
 var stick_center=Vector2(108,426)
 var pending_target=Vector2.INF
+var pending_action=""
+var escape_ready=false
+var escape_route=false
+var exit_marker:Node3D
 var index=0
 var floor_id=0
 var player_pos=Vector2(4.2,1.1)
@@ -184,10 +205,11 @@ func cell(p:Vector2,f:int)->Vector2i:
 func path(a:Vector2,b:Vector2,f:int)->PackedVector2Array:return navs[f].get_point_path(cell(a,f),cell(b,f))
 func start_case(n:int):
  if is_instance_valid(hud) and is_instance_valid(hud.result):hud.result.queue_free();hud.result=null
- paused=false;pending_target=Vector2.INF;index=clampi(n,0,CASES.size()-1);floor_id=0;neighbor_floor=int(CASES[index].floor);player_pos=Vector2(4.2,1.1);neighbor_pos=Vector2(-4.1,1.1)
+ paused=false;pending_target=Vector2.INF;pending_action="";escape_ready=false;escape_route=false;index=clampi(n,0,CASES.size()-1);floor_id=0;neighbor_floor=int(CASES[index].floor);player_pos=Vector2(4.2,1.1);neighbor_pos=Vector2(-4.1,1.1)
  for t in targets:t.node.queue_free()
  for t in supplies:t.node.queue_free()
- targets.clear();supplies.clear();inventory=[false,false,false,false];lives=3;caught=0;elapsed=0;action_time=0;stick=Vector2.ZERO;hidden=false;reaction=0;safe_time=4;alert=0;climbing=0;state="playing";player_path.clear();enemy_path.clear();waypoint=1
+ targets.clear();supplies.clear();if is_instance_valid(exit_marker):exit_marker.queue_free()
+ inventory=[false,false,false,false];lives=3;caught=0;elapsed=0;action_time=0;stick=Vector2.ZERO;hidden=false;reaction=0;safe_time=4;alert=0;climbing=0;state="playing";player_path.clear();enemy_path.clear();waypoint=1
  for i in range(CASES[index].kinds.size()):
   var kind=CASES[index].kinds[i];var p:Vector2=CASES[index].targets[i]
   var marker=make_marker(p,neighbor_floor,kind,false)
@@ -195,6 +217,7 @@ func start_case(n:int):
   var supply_pos=[Vector2(4.2,2.45),Vector2(3.3,.25),Vector2(5.1,.2),Vector2(5.2,2.35)][i]
   var supply=make_marker(supply_pos,0,kind,true)
   supplies.append({"kind":kind,"pos":supply_pos,"floor":0,"taken":false,"node":supply})
+ exit_marker=make_exit_marker();exit_marker.hide()
  set_slice();hud.refresh()
 func make_marker(p:Vector2,f:int,kind:int,supply:bool)->Node3D:
  var n=Node3D.new();n.position=Vector3(p.x,floor_height(p,f)+.04,p.y);add_child(n)
@@ -204,7 +227,41 @@ func make_marker(p:Vector2,f:int,kind:int,supply:bool)->Node3D:
  if supply:
   var icon=MeshInstance3D.new();var sphere=SphereMesh.new();sphere.radius=.12;sphere.height=.24;icon.mesh=sphere;icon.material_override=m;icon.position.y=.2;n.add_child(icon)
  return n
+func make_exit_marker()->Node3D:
+ var n=Node3D.new();n.name="SafeExit";n.position=Vector3(EXIT_POS.x,floor_height(EXIT_POS,0)+.05,EXIT_POS.y);add_child(n)
+ var mesh=MeshInstance3D.new();var ring=TorusMesh.new();ring.inner_radius=.37;ring.outer_radius=.45;mesh.mesh=ring
+ var m=StandardMaterial3D.new();m.albedo_color=Color("8ae0ac");m.emission_enabled=true;m.emission=Color("2c9d70");m.emission_energy_multiplier=.35;mesh.material_override=m;n.add_child(mesh)
+ var label=Label3D.new();label.text="ВЫХОД";label.font_size=40;label.pixel_size=.008;label.position.y=.75;label.billboard=BaseMaterial3D.BILLBOARD_ENABLED;n.add_child(label)
+ return n
+func walk_to(p:Vector2,kind:String):
+ if paused or state!="playing" or climbing>0:return
+ hidden=false;pending_target=p;pending_action=kind;player_path=path(player_pos,p,floor_id)
+ if player_pos.distance_to(p)<.8:complete_walk_action()
+func complete_walk_action():
+ var kind=pending_action;pending_action="";pending_target=Vector2.INF;player_path.clear()
+ match kind:
+  "interact":act()
+  "stairs":
+   if near_stair():start_climb()
+  "hide":
+   if near_hide():act()
+  "exit":finish_escape()
+func guide_to_exit():
+ if not escape_ready or paused or state!="playing":return
+ escape_route=true
+ if floor_id==1:walk_to(Vector2(5.0,-2.15),"stairs")
+ else:walk_to(EXIT_POS,"exit")
+func finish_escape():
+ if not escape_ready or state!="playing" or floor_id!=0 or player_pos.distance_to(EXIT_POS)>.9:return
+ state="won";escape_route=false;play("victory")
+ var cfg=ConfigFile.new();cfg.load("user://pakosti_release.cfg")
+ var next_case=mini(index+1,CASES.size()-1)
+ var unlocked=maxi(int(cfg.get_value("house","unlocked",0)),next_case)
+ cfg.set_value("house","unlocked",unlocked);cfg.set_value("house","last",next_case)
+ cfg.set_value("scores",str(index),maxi(int(cfg.get_value("scores",str(index),0)),maxi(100,1000-int(elapsed)*2-caught*150)))
+ cfg.save("user://pakosti_release.cfg");hud.show_result(true)
 func hint()->String:
+ if escape_ready:return "К ВЫХОДУ"
  if climbing>0:return "ЛЕСТНИЦА"
  if hidden:return "ВЫЙТИ ИЗ УКРЫТИЯ"
  for s in supplies:
@@ -237,7 +294,7 @@ func finish_prank(t):
   var p=MeshInstance3D.new();var mesh=SphereMesh.new();mesh.radius=.04;mesh.height=.08;p.mesh=mesh
   var m=StandardMaterial3D.new();m.albedo_color=COLORS[t.kind];p.material_override=m;p.position=Vector3(t.pos.x,.8+t.floor*H,t.pos.y);add_child(p);particles.append({"node":p,"velocity":Vector3(randf_range(-1.5,1.5),randf_range(1.2,2.5),randf_range(-1.5,1.5)),"life":1.5})
  if targets.all(func(item):return item.used):
-  state="won";play("victory");var cfg=ConfigFile.new();cfg.load("user://pakosti_release.cfg");var unlocked=maxi(int(cfg.get_value("house","unlocked",0)),mini(index+1,7));cfg.set_value("house","unlocked",unlocked);cfg.set_value("house","last",mini(index+1,7));cfg.set_value("scores",str(index),maxi(int(cfg.get_value("scores",str(index),0)),maxi(100,1000-int(elapsed)*2-caught*150)));cfg.save("user://pakosti_release.cfg");hud.show_result(true)
+  escape_ready=true;exit_marker.show();hud.refresh()
 func play(k:String):sfx[k].play()
 func tick_enemy(dt:float):
  if reaction>0:
@@ -254,7 +311,7 @@ func tick_enemy(dt:float):
  for t in targets:
   if t.armed and not t.used and neighbor_floor==t.floor and neighbor_pos.distance_to(t.pos)<.45:finish_prank(t);return
  if can_see and diff.length()<.5:
-  lives-=1;caught+=1;play("caught");safe_time=4;player_pos=Vector2(4.2,1.1);floor_id=0;player_path.clear();alert=0;set_slice()
+  lives-=1;caught+=1;play("caught");safe_time=4;player_pos=EXIT_POS;floor_id=0;player_path.clear();pending_target=Vector2.INF;pending_action="";escape_route=false;alert=0;set_slice()
   if lives<=0:state="lost";hud.show_result(false)
 func clear_line(a:Vector2,b:Vector2,f:int)->bool:
  for i in range(1,15):
@@ -280,7 +337,9 @@ func _process(dt:float):
     var s=(t-.18)/.64;p=(STAIR_BOTTOM if climb_from==0 else STAIR_TOP).lerp(STAIR_TOP if climb_from==0 else STAIR_BOTTOM,s);height=lerpf(climb_from*H,climb_to*H,s)
    else:p=(STAIR_TOP if climb_from==0 else STAIR_BOTTOM).lerp(climb_end,(t-.82)/.18);height=climb_to*H
    hero.position=Vector3(p.x,.2+height,p.y);animate(hero,1,0)
-   if climbing<=0:floor_id=climb_to;player_pos=climb_end;set_slice()
+   if climbing<=0:
+    floor_id=climb_to;player_pos=climb_end;set_slice()
+    if escape_route:guide_to_exit()
   else:move_player(dt)
   tick_enemy(dt)
  neighbor.position=Vector3(neighbor_pos.x,floor_height(neighbor_pos,neighbor_floor)-.015,neighbor_pos.y)
@@ -306,7 +365,7 @@ func move_player(dt:float):
  if Input.is_key_pressed(KEY_S):input.y+=1
  input=input.limit_length(1);var motion=Vector2.ZERO
  if input.length()>.1:
-  player_path.clear();pending_target=Vector2.INF;motion=input;hidden=false
+  player_path.clear();pending_target=Vector2.INF;pending_action="";escape_route=false;motion=input;hidden=false
  elif not player_path.is_empty():
   while not player_path.is_empty() and player_pos.distance_to(player_path[0])<.055:player_path.remove_at(0)
   if not player_path.is_empty():motion=(player_path[0]-player_pos).normalized()
@@ -317,8 +376,8 @@ func move_player(dt:float):
  hero.position=Vector3(player_pos.x,floor_height(player_pos,floor_id)-.015*hero.scale.y,player_pos.y)
  if motion.length()>.1:hero.rotation.y=lerp_angle(hero.rotation.y,atan2(motion.x,motion.y),minf(1,dt*12))
  animate(hero,motion.length() if action_time<=0 else 0,-1 if action_time>0 else 0)
- if pending_target!=Vector2.INF and player_pos.distance_to(pending_target)<.8:
-  pending_target=Vector2.INF;player_path.clear();act()
+ if pending_target!=Vector2.INF and player_pos.distance_to(pending_target)<.8:complete_walk_action()
+ if escape_ready and escape_route and floor_id==0 and player_pos.distance_to(EXIT_POS)<.8:finish_escape()
 func attach_animations(actor:Node3D,source_name:String):
  var source=actor_source.find_child("AnimationPlayer",true,false)
  if not source is AnimationPlayer:return
@@ -359,40 +418,49 @@ func set_quality(enabled:bool):
  var cfg=ConfigFile.new();cfg.load("user://pakosti_release.cfg");cfg.set_value("graphics","detail",enabled);cfg.save("user://pakosti_release.cfg")
 func click_world(p:Vector2):
  if paused or state!="playing" or climbing>0:return
- if hidden:act();return
- var closest=48.0;var selected=Vector2.INF
+ if hidden:hidden=false
+ var closest=68.0;var selected=Vector2.INF
  for item in supplies+targets:
   if item.floor!=floor_id or (item.has("taken") and item.taken) or (item.has("used") and (item.used or item.armed)):continue
   var screen=camera.unproject_position(Vector3(item.pos.x,.55+floor_id*H,item.pos.y))
   var distance=screen.distance_to(p)
   if distance<closest:closest=distance;selected=item.pos
  if selected!=Vector2.INF:
-  pending_target=selected;player_path=path(player_pos,selected,floor_id);return
- var origin=camera.project_ray_origin(p);var direction=camera.project_ray_normal(p);var hit=Plane(Vector3.UP,.2+floor_id*H).intersects_ray(origin,direction)
- if hit!=null:pending_target=Vector2.INF;player_path=path(player_pos,Vector2(hit.x,hit.z),floor_id)
-func handle_touch(i:int,p:Vector2,pressed:bool):
- if pressed:
-  if stick_id==-100 and p.distance_to(stick_center)<90:stick_id=i;stick=((p-stick_center)/58.0).limit_length(1);pending_target=Vector2.INF
- elif i==stick_id:stick_id=-100;stick=Vector2.ZERO
+  escape_route=false;walk_to(selected,"interact");return
+ if escape_ready and floor_id==0:
+  var exit_screen=camera.unproject_position(Vector3(EXIT_POS.x,.6,EXIT_POS.y))
+  if exit_screen.distance_to(p)<80:guide_to_exit();return
+ var stair_pos=Vector2(6.7,1.8) if floor_id==0 else Vector2(5.0,-2.15)
+ var stair_screen=camera.unproject_position(Vector3(stair_pos.x,.5+floor_id*H,stair_pos.y))
+ if stair_screen.distance_to(p)<70:
+  escape_route=false;walk_to(stair_pos,"stairs");return
+ for hide_pos in [Vector2(-7.1,1.5),Vector2(3.25,2.5)]:
+  var hide_screen=camera.unproject_position(Vector3(hide_pos.x,.7+floor_id*H,hide_pos.y))
+  if hide_screen.distance_to(p)<55:
+   escape_route=false;walk_to(hide_pos,"hide");return
+ var origin=camera.project_ray_origin(p)
+ var direction=camera.project_ray_normal(p)
+ var hit=Plane(Vector3.UP,.2+floor_id*H).intersects_ray(origin,direction)
+ if hit==null:return
+ var target=Vector2(clampf(hit.x,-7.45,7.45),clampf(hit.z,-2.70,2.70))
+ escape_route=false;pending_action="";pending_target=Vector2.INF
+ player_path=path(player_pos,target,floor_id)
 func _unhandled_input(e):
  if paused:
   if e is InputEventKey and e.pressed and e.keycode==KEY_ESCAPE and is_instance_valid(hud.pause_panel):hud.pause_panel.queue_free();hud.pause_panel=null;set_paused(false)
   return
- var s=get_viewport().get_visible_rect().size
- if e is InputEventScreenTouch:
-  handle_touch(e.index,e.position,e.pressed)
-  if e.pressed and e.index!=stick_id and e.position.y>100 and e.position.y<s.y-170:click_world(e.position)
- elif e is InputEventScreenDrag and e.index==stick_id:stick=((e.position-stick_center)/58.0).limit_length(1)
- elif e is InputEventMouseButton and e.button_index==MOUSE_BUTTON_LEFT:
-  handle_touch(-1,e.position,e.pressed)
-  if e.pressed and stick_id!=-1 and e.position.y>100 and e.position.y<s.y-170:click_world(e.position)
- elif e is InputEventMouseMotion and stick_id==-1:stick=((e.position-stick_center)/58.0).limit_length(1)
+ if e is InputEventScreenTouch and e.pressed:
+  if e.position.y>92:
+   click_world(e.position);get_viewport().set_input_as_handled()
+ elif e is InputEventMouseButton and e.button_index==MOUSE_BUTTON_LEFT and e.pressed:
+  if e.position.y>92:
+   click_world(e.position);get_viewport().set_input_as_handled()
  elif e is InputEventKey and e.pressed and not e.echo:
   if e.keycode in [KEY_E,KEY_SPACE]:act()
   elif e.keycode==KEY_ESCAPE:hud.show_pause()
   elif e.keycode==KEY_Q:set_quality(not quality)
 func set_paused(value:bool):
- paused=value;stick=Vector2.ZERO;stick_id=-100;player_path.clear();pending_target=Vector2.INF
+ paused=value;stick=Vector2.ZERO;stick_id=-100;player_path.clear();pending_target=Vector2.INF;pending_action="";escape_route=false
  for actor in [hero,neighbor]:
   if actor.has_meta("animation_player"):actor.get_meta("animation_player").speed_scale=0 if value else 1
 func _notification(what):
