@@ -24,7 +24,6 @@ func _ready():
  continue_button=mobile_button("ИГРАТЬ",func():menu_action(0));continue_button.name="Play"
  var cases=mobile_button("ЗАДАНИЯ",func():menu_action(2));cases.name="Cases"
  var options=mobile_button("НАСТРОЙКИ",func():menu_action(3));options.name="Options"
- var full=mobile_button("ЭКРАН",func():preload("res://scripts/mobile_shell.gd").request_fullscreen());full.name="Fullscreen";full.add_theme_font_size_override("font_size",16)
  var caption=Label.new();caption.name="BuildCaption";caption.text="ТЕСТОВАЯ СБОРКА  /  8 ИСПЫТАНИЙ";caption.add_theme_font_size_override("font_size",16);caption.modulate=Color("a5bbb6");panel.add_child(caption)
  layout_menu()
 func mobile_button(text:String,callback:Callable)->Button:
@@ -41,7 +40,6 @@ func layout_menu():
  continue_button.position=Vector2(x,224);continue_button.size=Vector2(360,90)
  panel.get_node("Cases").position=Vector2(x,332);panel.get_node("Cases").size=Vector2(174,76)
  panel.get_node("Options").position=Vector2(x+186,332);panel.get_node("Options").size=Vector2(174,76)
- panel.get_node("Fullscreen").position=Vector2(size.x-safe-100,22);panel.get_node("Fullscreen").size=Vector2(100,68)
  panel.get_node("BuildCaption").position=Vector2(x,size.y-53)
  if is_instance_valid(modal):
   var p=modal.get_node_or_null("Dialog")
