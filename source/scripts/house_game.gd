@@ -69,6 +69,12 @@ var lives=3
 var caught=0
 var reaction=0.0
 var reaction_kind=0
+var anger=0.0
+var anger_events=0
+var combo=0
+var best_combo=0
+var combo_timer=0.0
+var capture_time=0.0
 var alert=0.0
 var face=Vector2.RIGHT
 var safe_time=4.0
@@ -211,7 +217,7 @@ func start_case(n:int):
  for t in targets:t.node.queue_free()
  for t in supplies:t.node.queue_free()
  targets.clear();supplies.clear();if is_instance_valid(exit_marker):exit_marker.queue_free()
- inventory=[0,0,0,0];lives=3;caught=0;elapsed=0;action_time=0;stick=Vector2.ZERO;hidden=false;reaction=0;safe_time=4;alert=0;climbing=0;state="playing";player_path.clear();enemy_path.clear();waypoint=1
+ inventory=[0,0,0,0];lives=3;caught=0;elapsed=0;action_time=0;stick=Vector2.ZERO;hidden=false;reaction=0;anger=0;anger_events=0;combo=0;best_combo=0;combo_timer=0;capture_time=0;safe_time=4;alert=0;climbing=0;state="playing";player_path.clear();enemy_path.clear();waypoint=1
  var mission_points=CASES[index].targets.duplicate()
  var total=mini(8,4+int(index/4))
  for spot in TRAP_SPOTS:
@@ -269,7 +275,7 @@ func finish_escape():
  var next_case=mini(index+1,CASES.size()-1)
  var unlocked=maxi(int(cfg.get_value("house","unlocked",0)),next_case)
  cfg.set_value("house","unlocked",unlocked);cfg.set_value("house","last",next_case)
- cfg.set_value("scores",str(index),maxi(int(cfg.get_value("scores",str(index),0)),maxi(100,1000-int(elapsed)*2-caught*150)))
+ cfg.set_value("scores",str(index),maxi(int(cfg.get_value("scores",str(index),0)),maxi(100,1000-int(elapsed)*2-caught*150+best_combo*120+anger_events*60)))
  cfg.save("user://pakosti_release.cfg");hud.show_result(true)
 func hint()->String:
  if escape_ready:return "К ВЫХОДУ"
@@ -300,30 +306,49 @@ func act():
 func start_climb():
  climbing=3.1;climb_from=floor_id;climb_to=1-floor_id;climb_start=player_pos;climb_end=Vector2(5.0,-2.15) if floor_id==0 else Vector2(6.7,1.8);hidden=false;player_path.clear();set_slice()
 func finish_prank(t):
- t.used=true;t.armed=false;t.node.hide();reaction=2.7;reaction_kind=t.kind;play("prank")
+ t.used=true;t.armed=false;t.node.hide();reaction=2.5;reaction_kind=t.kind;play("prank")
+ anger_events+=1;anger=clampf(anger+.14+float(index)*.002,0,1)
+ combo=combo+1 if combo_timer>0 else 1
+ best_combo=maxi(best_combo,combo);combo_timer=10.0
+ alert=maxf(alert,.25+anger*.25);enemy_path.clear()
  for i in range(14):
   var p=MeshInstance3D.new();var mesh=SphereMesh.new();mesh.radius=.04;mesh.height=.08;p.mesh=mesh
   var m=StandardMaterial3D.new();m.albedo_color=COLORS[t.kind];p.material_override=m;p.position=Vector3(t.pos.x,.8+t.floor*H,t.pos.y);add_child(p);particles.append({"node":p,"velocity":Vector3(randf_range(-1.5,1.5),randf_range(1.2,2.5),randf_range(-1.5,1.5)),"life":1.5})
  if targets.all(func(item):return item.used):
   escape_ready=true;exit_marker.show();hud.refresh()
 func play(k:String):sfx[k].play()
+func begin_capture():
+ if capture_time>0 or safe_time>0 or state!="playing":return
+ capture_time=1.8;lives-=1;caught+=1;play("caught")
+ player_path.clear();pending_target=Vector2.INF;pending_action="";escape_route=false;hidden=false
+ alert=1.0
+func tick_capture(dt:float):
+ capture_time=maxf(0,capture_time-dt)
+ var phase=1.8-capture_time
+ animate(hero,0,3);animate(neighbor,0,4)
+ hero.rotation.z=sin(phase*15.0)*.16
+ neighbor.rotation.z=sin(phase*13.0)*.09
+ var arm=neighbor.find_child("Arm_R*",true,false)
+ if arm is Node3D:arm.rotation.z=sin(phase*17.0)*.55
+ if capture_time<=0:
+  hero.rotation.z=0;neighbor.rotation.z=0
+  player_pos=EXIT_POS;floor_id=0;safe_time=5.5;alert=0;enemy_path.clear();set_slice()
+  if lives<=0:state="lost";hud.show_result(false)
 func tick_enemy(dt:float):
  if reaction>0:
   reaction=maxf(0,reaction-dt);return
  var diff=player_pos-neighbor_pos
- var can_see=floor_id==neighbor_floor and not hidden and climbing<=0 and safe_time<=0 and diff.length()<3.1 and diff.normalized().dot(face)>.15 and clear_line(neighbor_pos,player_pos,neighbor_floor)
- alert=clampf(alert+dt*(1.1 if can_see else -.65),0,1)
+ var can_see=floor_id==neighbor_floor and not hidden and climbing<=0 and safe_time<=0 and diff.length()<3.1+anger*1.5 and diff.normalized().dot(face)>-.1 and clear_line(neighbor_pos,player_pos,neighbor_floor)
+ alert=clampf(alert+dt*((1.1+anger*.65) if can_see else -.5),0,1)
  var dest:Vector2=player_pos if alert>.85 else route[waypoint]
  if neighbor_pos.distance_to(dest)<.15 and alert<=.85:waypoint=(waypoint+1)%route.size();dest=route[waypoint]
  if enemy_path.is_empty() or (alert>.85 and int(elapsed*4)%3==0):enemy_path=path(neighbor_pos,dest,neighbor_floor)
  while not enemy_path.is_empty() and neighbor_pos.distance_to(enemy_path[0])<.055:enemy_path.remove_at(0)
  if not enemy_path.is_empty():
-  var step=enemy_path[0]-neighbor_pos;face=step.normalized();neighbor_pos+=step.limit_length(dt*(2.3 if alert>.85 else 1.15+index*.035))
+  var step=enemy_path[0]-neighbor_pos;face=step.normalized();neighbor_pos+=step.limit_length(dt*((2.3+anger*1.35) if alert>.85 else (1.15+anger*.75+minf(index*.02,.25))))
  for t in targets:
   if t.armed and not t.used and neighbor_floor==t.floor and neighbor_pos.distance_to(t.pos)<.45:finish_prank(t);return
- if can_see and diff.length()<.5:
-  lives-=1;caught+=1;play("caught");safe_time=4;player_pos=EXIT_POS;floor_id=0;player_path.clear();pending_target=Vector2.INF;pending_action="";escape_route=false;alert=0;set_slice()
-  if lives<=0:state="lost";hud.show_result(false)
+ if can_see and diff.length()<.62:begin_capture()
 func clear_line(a:Vector2,b:Vector2,f:int)->bool:
  for i in range(1,15):
   if blocked(a.lerp(b,float(i)/15),f):return false
@@ -337,7 +362,10 @@ func _process(dt:float):
  if is_instance_valid(cool_room_fill):
   cool_room_fill.position.y=3.6+floor_id*H
  if state=="won":animate(hero,0,99)
- elapsed+=dt;safe_time=maxf(0,safe_time-dt);action_time=maxf(0,action_time-dt)
+ elapsed+=dt;safe_time=maxf(0,safe_time-dt);action_time=maxf(0,action_time-dt);combo_timer=maxf(0,combo_timer-dt)
+ if combo_timer<=0:combo=0
+ if capture_time>0:
+  tick_capture(dt);hud.refresh();return
  if state=="playing":
   if climbing>0:
    climbing=maxf(0,climbing-dt);var t=1-climbing/3.1
@@ -417,7 +445,7 @@ func animate(actor:Node3D,speed:float,pose:int):
   elif pose>0:clip="react_surprise"
   if player.has_animation(clip) and player.current_animation!=clip:player.play(clip,.16)
   player.speed_scale=maxf(.65,speed) if clip=="walk" else 1.0
- preload("res://scripts/cast_expressions.gd").apply(actor,elapsed,String(actor.name).begins_with("Neighbor"),pose==99)
+ preload("res://scripts/cast_expressions.gd").apply(actor,elapsed,actor==neighbor,pose==99,anger if actor==neighbor else 0.0)
  actor.rotation.z=sin(elapsed*12)*.12 if pose in [1,3] else 0
 func set_quality(enabled:bool):
  quality=enabled;shadow.shadow_enabled=enabled;get_viewport().scaling_3d_scale=1 if enabled else .75
@@ -457,6 +485,7 @@ func click_world(p:Vector2):
  escape_route=false;pending_action="";pending_target=Vector2.INF
  player_path=path(player_pos,target,floor_id)
 func _unhandled_input(e):
+ if capture_time>0:return
  if paused:
   if e is InputEventKey and e.pressed and e.keycode==KEY_ESCAPE and is_instance_valid(hud.pause_panel):hud.pause_panel.queue_free();hud.pause_panel=null;set_paused(false)
   return
