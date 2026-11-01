@@ -32,3 +32,12 @@ The interior is a richly furnished warm two-story home.
 The scripted sculpture stage is source/art/sculpt_proportions.py.
 This file is project documentation for connected assistants; it is not
 a newly installed or registered ChatGPT plugin.
+
+## Rejected visual experiment
+
+The groom_cast.py stage is deliberately DISABLED. Real 960x540 Godot closeups
+showed blond-looking side protrusions on both characters (worse than the prior
+chestnut forelocks and side tufts). Do not reenable that pass or enforce its
+mesh names until a new sculpt has passed screenshot review at matching angles.
+The current approved baseline uses the original forehead hair and neighbor
+side tufts, then the real face/body silhouette stage sculpt_proportions.py.

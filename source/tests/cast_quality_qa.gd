@@ -12,11 +12,6 @@ func run():
   var face=faces[0];check(face.mesh.get_blend_shape_count()==3,"Missing facial shapes")
   if actor==g.hero:
    check(actor.find_children("*Hero_FreckleClusters*","MeshInstance3D",true,false).size()==1,"Freckles are absent from the hero\u0027s anatomical cheeks")
-  var hair_id="GroomedHair_Hero" if actor==g.hero else "GroomedHair_Neighbor"
-  var hair_meshes=actor.find_children("*"+hair_id+"*","MeshInstance3D",true,false)
-  check(hair_meshes.size()==1,"Detailed hair sculpt missing or duplicated: "+hair_id)
-  if hair_meshes.size()==1:
-   check(hair_meshes[0].mesh.get_surface_count()>=2,"Hair lacks distinct sculpted tone materials")
   var expected=["Smile","Frown","Blink"]
   for i in range(face.mesh.get_blend_shape_count()):check(String(face.mesh.get_blend_shape_name(i)) in expected,"Unexpected facial target")
   g.elapsed=3.1;g.animate(actor,0,99);var smile=face.find_blend_shape_by_name("Smile")
