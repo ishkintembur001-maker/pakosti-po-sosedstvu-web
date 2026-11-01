@@ -35,6 +35,7 @@ jobs:
           tools/blender-4.3.2-linux-x64/blender -b --python-exit-code 1 --python source/art/tailor_cast.py > evidence/tailor-cast.log 2>&1
           tools/blender-4.3.2-linux-x64/blender -b --python-exit-code 1 --python source/art/sculpt_cast.py > evidence/sculpt-cast.log 2>&1
           tools/blender-4.3.2-linux-x64/blender -b --python-exit-code 1 --python source/art/groom_cast.py > evidence/groom-cast.log 2>&1
+          tools/blender-4.3.2-linux-x64/blender -b --python-exit-code 1 --python source/art/sculpt_proportions.py > evidence/sculpt-proportions.log 2>&1
           tools/blender-4.3.2-linux-x64/blender -b --python-exit-code 1 --python source/art/facial_details.py > evidence/facial-details.log 2>&1
           tools/blender-4.3.2-linux-x64/blender -b --python-exit-code 1 --python source/art/polish_environments.py > evidence/environment-blender.log 2>&1
           tools/blender-4.3.2-linux-x64/blender -b --python-exit-code 1 --python source/art/character_microdetail.py > evidence/character-microdetail.log 2>&1
