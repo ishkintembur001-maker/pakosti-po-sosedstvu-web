@@ -64,6 +64,12 @@ def mesh_part(name, coordinates, polygons, mat, parent):
 def ribbon(name, path, widths, mat, parent, lift=.013):
     if len(path) < 3 or len(widths) != len(path):
         raise ValueError("Need at least three fold sections and matching widths")
+    # QA 2026-11-01: the narrow raised folds made black seams in real Godot
+    # Compatibility screenshots even after fixing winding and COLOR_0.
+    # Do not export those unstable floating patches to the mobile game.
+    # Keep only broad neighbor shawl lapels, which define garment silhouette.
+    if not name.startswith("Tailor_Neighbor_ShawlLapel_"):
+        return None
     vertices = []
     faces = []
     for (x, y, z), w in zip(path, widths):
@@ -194,8 +200,11 @@ for name in ROOTS:
     else:
         detailed_neighbor(actor)
     created=len(added)-start
-    if created<15:
-        raise AssertionError(name+": insufficient clothing geometry "+str(created))
+    # Hero retains waistband + limb cuffs, neighbor retains lapels, cuffs,
+    # hem and discrete fasteners. Decorative shadow-slit folds are excluded.
+    minimum=5 if name=="TricksterCharacter" else 10
+    if created<minimum:
+        raise AssertionError(name+": insufficient structural clothing geometry "+str(created))
     print("TAILORED_CAST_OK",name,created,flush=True)
 
 if tuple(sorted(a.name for a in bpy.data.actions)) != original[ROOTS[0]]["animation_names"]:
