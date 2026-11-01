@@ -13,5 +13,5 @@ func run():
  g.set_slice();g._process(0);await shot("new_house_gameplay")
  g.hud.hide()
  for item in g.targets+g.supplies:item.node.hide()
- g.hero.position=Vector3(-4.7,.2,1.0);g.hero.rotation.y=.2;g.neighbor.position=Vector3(-3.1,.2,1.0);g.neighbor.rotation.y=-.15;g.camera.projection=Camera3D.PROJECTION_PERSPECTIVE;g.camera.fov=43;g.camera.position=Vector3(-3.9,2.15,6.3);g.camera.look_at(Vector3(-4,1.3,1));await shot("new_house_cast")
+ g.player_pos=Vector2(-4.7,1.0);g.neighbor_pos=Vector2(-3.1,1.0);g._process(0);g.hero.rotation.y=.2;g.neighbor.rotation.y=-.15;g.camera.projection=Camera3D.PROJECTION_PERSPECTIVE;g.camera.fov=43;g.camera.position=Vector3(-3.9,2.15,6.3);g.camera.look_at(Vector3(-4,1.3,1));await shot("new_house_cast")
  menu.return_menu();await process_frame;menu.queue_free();await process_frame;quit()

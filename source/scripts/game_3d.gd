@@ -60,6 +60,12 @@ func apply_custom_apartment():
 	scene.name = "ApartmentVisuals"
 	world.add_child(scene)
 	imported_world = scene
+	# Godot 4.4 does not select UV2 for glTF occlusion maps automatically.
+	for mesh in scene.find_children("*", "MeshInstance3D", true, false):
+		for i in range(mesh.mesh.get_surface_count()):
+			var surface = mesh.get_active_material(i)
+			if surface is StandardMaterial3D and surface.ao_enabled and surface.ao_texture and surface.resource_name.begins_with("Apartment / "):
+				surface.ao_on_uv2 = true
 	hero.visible = false
 	for episode in [1, 2, 3]:
 		var detail = scene.find_child("EpisodeDetail%d" % episode, true, false)

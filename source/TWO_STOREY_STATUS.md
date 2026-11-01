@@ -14,12 +14,18 @@ Faces now use derived Blender Studio CC0 quad topology instead of assembled face
 
 These are basic part animations, not a finished full-body skeletal/finger rig or the 80-clip production design.
 
+## Environment materials and grounding
+
+The static house and classic apartment have separate baked ambient-occlusion atlases (1024 and 512 pixels), with a second UV channel. The shared cutaway shader preserves albedo, normal, roughness and AO maps. Smooth mode keeps baked shading and disables detail normal maps. Classic imports explicitly enable UV2 occlusion. The former raised floor-joint strips were removed because they aliased into black dots at the mobile render scale.
+
+Wood now uses offline, 1024-pixel derivatives of Rob Tuytel / Poly Haven's CC0 Fine Grained Wood scan. Source URLs and hashes are recorded in art/source/materials/materials.json. Other fabric and wallpaper detail remains procedural. Actual raycast floor-height data grounds actors on rugs; subtle contact shadows follow them and disappear while hidden or climbing.
+
 ## Rebuild
 
-Use Blender 4.3.2 and Godot 4.4.1. Run python3 source/art/make_textures.py, then Blender --background --python for source/art/build_assets.py, source/art/refine_cast.py and source/art/replace_faces.py in that order. Import source/project.godot in Godot. The checked gzip house is verified and unpacked by refine_cast.py. The small CC0 head collection makes face rebuilds independent of the full external 49 MB asset bundle.
+Use Blender 4.3.2 and Godot 4.4.1. Run python3 source/art/make_textures.py, then Blender --background --python-exit-code 1 --python for source/art/build_assets.py, source/art/refine_cast.py and source/art/replace_faces.py and source/art/polish_environments.py in that order. Import source/project.godot in Godot. The checked gzip house is verified and unpacked by refine_cast.py. The small CC0 head collection makes face rebuilds independent of the full external 49 MB asset bundle.
 
 ## Validation and remaining work
 
-Native Godot checks cover house completion, stair traversal, independent touch fingers, responsive layout/pause, body clips and facial morph weights. Native close-up screenshots include neutral, smile, frown and blink poses. CI rebuilds both Blender masters, runs the tests, captures real engine frames and exports a Web preview as downloadable artifacts.
+Native Godot checks cover house completion, stair traversal, independent touch fingers, responsive layout/pause, body clips and facial morph weights. Environment tests also check AO and normal-map bindings, atlas size, UV2, rug grounding and contact-shadow visibility. Native close-up screenshots include neutral, smile, frown and blink poses. CI rebuilds both Blender masters, runs the tests, captures real engine frames and exports a Web preview as downloadable artifacts.
 
 The supplied cinematic reference is still NOT met: clothing folds and cloth textures, hands, full acting animations, environment light/detail and the larger twelve-room concept house remain unfinished. The cinematic menu background is concept art, not an engine render. Pages publication remains blocked by visual review; passing automated tests alone is not visual acceptance.

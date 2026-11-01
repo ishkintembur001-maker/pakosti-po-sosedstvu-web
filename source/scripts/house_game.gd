@@ -5,6 +5,8 @@ const SPEED=3.4
 const STAIR_BOTTOM=Vector2(6.8,2.75)
 const STAIR_TOP=Vector2(6.8,-1.8)
 const MODEL=preload("res://assets/models/two_storey.glb")
+const CUTAWAY_SHADER=preload("res://shaders/cutaway.gdshader")
+const CONTACT_SHADER=preload("res://shaders/contact_shadow.gdshader")
 const CASES=[
  {"title":"Первый след", "floor":0,"kinds":[0],"targets":[Vector2(-4.1,1.1)]},
  {"title":"Красочный приём", "floor":0,"kinds":[1],"targets":[Vector2(3.7,1.1)]},
@@ -63,6 +65,9 @@ var info:Label
 var goal:Label
 var action_button:Button
 var result_panel:PanelContainer
+var floor_data:Dictionary={}
+var hero_contact:MeshInstance3D
+var neighbor_contact:MeshInstance3D
 var slice_materials=[]
 var shadow:DirectionalLight3D
 var sfx={}
@@ -71,6 +76,9 @@ var hud_script=preload("res://scripts/house_hud.gd")
 
 func _ready():
  add_to_group("mobile_games")
+ if FileAccess.file_exists("res://assets/data/floor_surfaces.json"):
+  var parsed=JSON.parse_string(FileAccess.get_file_as_string("res://assets/data/floor_surfaces.json"))
+  if parsed is Dictionary:floor_data=parsed
  actor_source=MODEL.instantiate();add_child(actor_source)
  environment_root=actor_source.find_child("TwoStoreyHouse",true,false)
  var source_hero=actor_source.find_child("TricksterCharacter",true,false)
@@ -78,6 +86,7 @@ func _ready():
  hero=source_hero.duplicate();add_child(hero);hero.position=Vector3.ZERO;hero.rotation=Vector3.ZERO
  neighbor=source_neighbor.duplicate();add_child(neighbor);neighbor.position=Vector3.ZERO;neighbor.rotation=Vector3.ZERO
  source_hero.hide();source_neighbor.hide()
+ hero_contact=make_contact(Vector2(.78,.54));neighbor_contact=make_contact(Vector2(1.02,.72))
  attach_animations(hero,"TricksterCharacter");attach_animations(neighbor,"NeighborCharacter")
  for c in actor_source.find_children("*","Camera3D",true,false):c.current=false
  for light in actor_source.find_children("*","Light3D",true,false):light.visible=false
@@ -92,14 +101,35 @@ func _ready():
  start_case(index)
  var cfg=ConfigFile.new();cfg.load("user://pakosti_release.cfg");set_quality(bool(cfg.get_value("graphics","detail",not (OS.has_feature("web") or OS.has_feature("mobile")))))
 
+func floor_height(p:Vector2,f:int)->float:
+ if floor_data.is_empty():return .20+f*H
+ var w=int(floor_data.width);var d=int(floor_data.depth);var cell_size=float(floor_data.cell)
+ var u=clampf((p.x-float(floor_data.origin[0]))/cell_size,0,w-1.001);var v=clampf((p.y-float(floor_data.origin[1]))/cell_size,0,d-1.001)
+ var x=int(floor(u));var z=int(floor(v));var values=floor_data.floors[clampi(f,0,1)]
+ var a=lerpf(float(values[z*w+x]),float(values[z*w+x+1]),u-x)
+ var b=lerpf(float(values[(z+1)*w+x]),float(values[(z+1)*w+x+1]),u-x)
+ return lerpf(a,b,v-z)
+func make_contact(dimensions:Vector2)->MeshInstance3D:
+ var contact=MeshInstance3D.new();contact.name="SoftContactShadow";var mesh=PlaneMesh.new();mesh.size=dimensions;contact.mesh=mesh
+ var material=ShaderMaterial.new();material.shader=CONTACT_SHADER;contact.material_override=material;contact.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF;add_child(contact);return contact
+func update_contact(contact:MeshInstance3D,actor:Node3D,p:Vector2,f:int,shown:bool):
+ contact.visible=shown
+ contact.position=Vector3(p.x,floor_height(p,f)+.004,p.y);contact.rotation.y=actor.rotation.y
+
 func make_slices(node:Node):
  if node is MeshInstance3D:
   for i in range(node.mesh.get_surface_count()):
    var m=node.get_active_material(i)
    if not m is StandardMaterial3D:continue
-   var shader=Shader.new();shader.code="shader_type spatial; render_mode cull_disabled; uniform vec4 tint:source_color=vec4(1.0); uniform sampler2D tex:source_color,filter_linear_mipmap_anisotropic,repeat_enable; uniform bool textured=false; uniform float cutoff=99.0; uniform float rough=0.8; uniform float metal=0.0; varying float wy; void vertex(){wy=(MODEL_MATRIX*vec4(VERTEX,1.0)).y;} void fragment(){if(wy>cutoff) discard; ALBEDO=tint.rgb*(textured?texture(tex,UV).rgb:vec3(1.0)); ROUGHNESS=rough;METALLIC=metal;}"
-   var sm=ShaderMaterial.new();sm.shader=shader;sm.set_shader_parameter("tint",m.albedo_color);sm.set_shader_parameter("rough",m.roughness);sm.set_shader_parameter("metal",m.metallic)
+   var sm=ShaderMaterial.new();sm.shader=CUTAWAY_SHADER
+   sm.set_shader_parameter("tint",m.albedo_color);sm.set_shader_parameter("rough",m.roughness);sm.set_shader_parameter("metal",m.metallic)
    if m.albedo_texture:sm.set_shader_parameter("tex",m.albedo_texture);sm.set_shader_parameter("textured",true)
+   if m.normal_enabled and m.normal_texture:
+    sm.set_shader_parameter("normal_tex",m.normal_texture);sm.set_shader_parameter("normal_mapped",true);sm.set_shader_parameter("normal_scale",m.normal_scale)
+   if m.roughness_texture:
+    sm.set_shader_parameter("rough_tex",m.roughness_texture);sm.set_shader_parameter("rough_mapped",true);sm.set_shader_parameter("rough_channel",m.roughness_texture_channel)
+   if m.ao_enabled and m.ao_texture:
+    sm.set_shader_parameter("ao_tex",m.ao_texture);sm.set_shader_parameter("ao_mapped",true)
    node.set_surface_override_material(i,sm);slice_materials.append(sm)
  for c in node.get_children():make_slices(c)
 
@@ -153,7 +183,7 @@ func start_case(n:int):
   supplies.append({"kind":kind,"pos":supply_pos,"floor":0,"taken":false,"node":supply})
  set_slice();hud.refresh()
 func make_marker(p:Vector2,f:int,kind:int,supply:bool)->Node3D:
- var n=Node3D.new();n.position=Vector3(p.x,.23+f*H,p.y);add_child(n)
+ var n=Node3D.new();n.position=Vector3(p.x,floor_height(p,f)+.04,p.y);add_child(n)
  var mesh=MeshInstance3D.new();var ring=TorusMesh.new();ring.inner_radius=.28;ring.outer_radius=.32;ring.rings=20;ring.ring_segments=8;mesh.mesh=ring
  var m=StandardMaterial3D.new();m.albedo_color=COLORS[kind];m.emission_enabled=true;m.emission=COLORS[kind];m.emission_energy_multiplier=.25;mesh.material_override=m;n.add_child(mesh)
  var label=Label3D.new();label.text=("ВЗЯТЬ: " if supply else "")+NAMES[kind];label.font_size=28;label.pixel_size=.009;label.position.y=.58;label.billboard=BaseMaterial3D.BILLBOARD_ENABLED;label.no_depth_test=false;n.add_child(label)
@@ -233,9 +263,11 @@ func _process(dt:float):
    if climbing<=0:floor_id=climb_to;player_pos=climb_end;set_slice()
   else:move_player(dt)
   tick_enemy(dt)
- neighbor.position=Vector3(neighbor_pos.x,.2+neighbor_floor*H,neighbor_pos.y)
+ neighbor.position=Vector3(neighbor_pos.x,floor_height(neighbor_pos,neighbor_floor)-.015,neighbor_pos.y)
  neighbor.rotation.y=atan2(face.x,face.y);animate(neighbor,0 if reaction>0 else 1,reaction_kind+1 if reaction>0 else 0)
  hero.visible=not hidden;neighbor.visible=neighbor_floor==floor_id or climbing>0
+ update_contact(hero_contact,hero,player_pos,floor_id,not hidden and climbing<=0)
+ update_contact(neighbor_contact,neighbor,neighbor_pos,neighbor_floor,neighbor.visible)
  var focus=hero.position+Vector3(0,.8,0);var target=Vector3(clampf(focus.x,-3,3),focus.y,0)
  camera.position=target+Vector3(1.2,7.5,17);camera.look_at(target)
  for i in range(particles.size()-1,-1,-1):
@@ -262,7 +294,7 @@ func move_player(dt:float):
   var step=motion*SPEED*dt
   for axis in [Vector2(step.x,0),Vector2(0,step.y)]:
    if not blocked(player_pos+axis,floor_id):player_pos+=axis
- hero.position=Vector3(player_pos.x,.2+floor_id*H,player_pos.y)
+ hero.position=Vector3(player_pos.x,floor_height(player_pos,floor_id)-.015*hero.scale.y,player_pos.y)
  if motion.length()>.1:hero.rotation.y=lerp_angle(hero.rotation.y,atan2(motion.x,motion.y),minf(1,dt*12))
  animate(hero,motion.length() if action_time<=0 else 0,-1 if action_time>0 else 0)
  if pending_target!=Vector2.INF and player_pos.distance_to(pending_target)<.8:
@@ -299,6 +331,8 @@ func animate(actor:Node3D,speed:float,pose:int):
  actor.rotation.z=sin(elapsed*12)*.12 if pose in [1,3] else 0
 func set_quality(enabled:bool):
  quality=enabled;shadow.shadow_enabled=enabled;get_viewport().scaling_3d_scale=1 if enabled else .75
+ get_viewport().msaa_3d=Viewport.MSAA_2X if enabled else Viewport.MSAA_DISABLED
+ for sm in slice_materials:sm.set_shader_parameter("detail_normals",enabled)
  var cfg=ConfigFile.new();cfg.load("user://pakosti_release.cfg");cfg.set_value("graphics","detail",enabled);cfg.save("user://pakosti_release.cfg")
 func click_world(p:Vector2):
  if paused or state!="playing" or climbing>0:return

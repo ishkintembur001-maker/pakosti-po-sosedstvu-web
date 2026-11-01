@@ -1,0 +1,9 @@
+Godot Engine v4.4.1.stable.official.49a5bc7b6 - https://godotengine.org
+
+ANATOMICAL_CAST_OK TricksterCharacter shapes=3
+ANATOMICAL_CAST_OK NeighborCharacter shapes=3
+CLASSIC_CAST_OK level=1
+CLASSIC_CAST_OK level=2
+CLASSIC_CAST_OK level=3
+CLASSIC_CAST_OK level=4
+CAST_QUALITY_QA failures=0

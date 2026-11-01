@@ -102,7 +102,7 @@ func return_menu():
  if is_instance_valid(active_game):
   for player in active_game.find_children("*","AudioStreamPlayer",true,false):player.stop()
   get_tree().root.remove_child(active_game);active_game.queue_free()
- active_game=null;panel.show();settings.load(SAVE);music.volume_db=0;get_viewport().scaling_3d_scale=1
+ active_game=null;panel.show();settings.load(SAVE);music.volume_db=0;get_viewport().scaling_3d_scale=1;get_viewport().msaa_3d=Viewport.MSAA_DISABLED
 func _process(_dt):
  layout_menu()
  if is_instance_valid(active_game) and active_game.get_script()==preload("res://scripts/game_3d.gd") and active_game.state==0:return_menu()
