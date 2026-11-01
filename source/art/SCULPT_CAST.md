@@ -1,0 +1,3 @@
+# Next visual pass: anatomical cheek volume and hands
+
+Runs on Blender 4.3.2 in source/art/sculpt_cast.py after tailored clothing and before static AO baking. This revises original face topology in place (including every facial morph target, preserving the Smile/Frown/Blink offsets), gives the already-existing hoodie and robe actual subdued fabric drape via subdivided mesh displacement, and adds one joint-parented surface for four fingernails per hand. No floating facial stickers or heavy real-time skin shaders. The meshes retain mobile-friendly original material links, UVs, hinge animation and gameplay. This is not a new fully rigged body or a complete reconstruction of the cinematic reference. Native Godot screenshots and real mobile FPS still require inspection.
