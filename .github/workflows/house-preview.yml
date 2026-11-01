@@ -53,9 +53,8 @@ jobs:
           xvfb-run -a tools/Godot_v4.4.1-stable_linux.x86_64 --audio-driver Dummy --path source --script res://tests/house_performance.gd > evidence/performance.log 2>&1
           xvfb-run -a tools/Godot_v4.4.1-stable_linux.x86_64 --audio-driver Dummy --path source --script res://tests/mobile_capture.gd > evidence/mobile-capture.log 2>&1
       - name: Configure Android SDK and debug signing
-        env:
-          ANDROID_SDK_ROOT: ${{ env.ANDROID_HOME }}
         run: |
+          export ANDROID_SDK_ROOT="${ANDROID_HOME}"
           test -x "${ANDROID_SDK_ROOT}/platform-tools/adb"
           test -d "${JAVA_HOME_17_X64}"
           keytool -genkeypair -noprompt -keystore "${RUNNER_TEMP}/pakosti-debug.keystore" -alias androiddebugkey -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
