@@ -36,6 +36,7 @@ func run():
   while not g.escape_ready and frames<24000:
    g.elapsed+=1.0/60;g.tick_enemy(1.0/60);frames+=1
   check(g.escape_ready,"Patrol did not trigger every trap in case %d"%mission)
+  check(g.anger_events==g.targets.size(),"Neighbor anger must increase after each prank")
   g.guide_to_exit()
   for step in range(1800):
    if g.state!="playing":break
@@ -56,6 +57,10 @@ func run():
   g.start_case(mission)
   check(g.targets.size()==g.supplies.size() and g.targets.size()>0,"New challenge has no playable targets")
  check(not g.hud.action.visible,"Exit button shown before all traps complete")
+ g.start_case(0);g.safe_time=0;g.begin_capture()
+ check(g.capture_time>0 and g.lives==2,"Capture must cost a life and start scene")
+ for frame in range(120):g.tick_capture(1.0/60)
+ check(g.capture_time==0 and g.player_pos==g.EXIT_POS,"Hero must respawn after capture")
  g.floor_id=1;g.player_pos=Vector2(5,-2.15);g.act();for f in range(190):g._process(1.0/60)
  check(g.floor_id==0 and not g.blocked(g.player_pos,0),"Stair descent failed")
  menu.return_menu();check(menu.panel.visible and menu.active_game==null,"Return to menu failed")

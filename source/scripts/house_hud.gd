@@ -55,12 +55,22 @@ func refresh():
   if game.inventory[i]>0:items.append("%s×%d"%[game.NAMES[i],game.inventory[i]])
  bag.text="РЮКЗАК: "+(", ".join(items) if not items.is_empty() else "пусто")+"   •   РЕАКЦИИ %d/%d"%[done,game.targets.size()]
  action.visible=game.escape_ready and game.state=="playing"
- action.disabled=game.climbing>0 or game.paused
- tip.text="ТЫ В УКРЫТИИ" if game.hidden else ("Сосед заметил тебя!" if game.alert>.45 else ("Нажми «К ВЫХОДУ»" if game.escape_ready else ("Коснись пола для ходьбы, предмета — для действия" if game.elapsed<12 else "")))
+ action.disabled=game.climbing>0 or game.paused or game.capture_time>0
+ if game.capture_time>0:tip.text="ПОЙМАЛ! СОСЕД УСТРОИЛ ТРЁПКУ!"
+ elif game.hidden:tip.text="ТЫ В УКРЫТИИ"
+ elif game.alert>.45:tip.text="Сосед гонится за тобой!"
+ elif game.combo>1:tip.text="СЕРИЯ ПАКОСТЕЙ ×%d!"%game.combo
+ elif game.escape_ready:tip.text="Нажми «К ВЫХОДУ»"
+ elif game.elapsed<12:tip.text="Коснись пола или предмета — герой сам подойдёт"
+ else:tip.text="ЗЛОСТЬ СОСЕДА: %d%%   •   СЕРИЯ: %d"%[int(game.anger*100),game.best_combo]
  queue_redraw()
 func _draw():
  if not is_instance_valid(game):return
  if game.alert>.05:draw_rect(Rect2(last_size.x*.5-85,94,170*game.alert,6),Color(1,.32,.2,.9))
+ var pos=Vector2(last_size.x*.5-120,125)
+ draw_rect(Rect2(pos,Vector2(240,9)),Color(.08,.09,.1,.75))
+ draw_rect(Rect2(pos,Vector2(240*game.anger,9)),Color(1,.29,.13,.95))
+ if game.capture_time>0:draw_rect(Rect2(Vector2.ZERO,last_size),Color(1,.12,.08,.10+.08*absf(sin(game.capture_time*16))))
 func make_panel()->PanelContainer:
  var p=PanelContainer.new();p.size=Vector2(500,360);p.position=(get_viewport_rect().size-p.size)*.5
  var style=StyleBoxFlat.new();style.bg_color=Color("14292f");style.set_corner_radius_all(24);style.set_border_width_all(2);style.border_color=Color("caa56a");style.content_margin_left=28;style.content_margin_right=28;style.content_margin_top=22;style.content_margin_bottom=22;p.add_theme_stylebox_override("panel",style);add_child(p);return p
@@ -77,7 +87,7 @@ func show_result(won:bool):
  if is_instance_valid(result):result.queue_free()
  result=make_panel();var box=VBoxContainer.new();box.add_theme_constant_override("separation",15);result.add_child(box)
  var title=Label.new();title.text="ПАКОСТЬ УДАЛАСЬ!" if won else "ПОПРОБУЙ ЕЩЁ РАЗ";title.add_theme_font_size_override("font_size",27);box.add_child(title)
- var details=Label.new();details.text="%d с   /   Попался: %d"%[int(game.elapsed),game.caught];details.add_theme_font_size_override("font_size",22);box.add_child(details)
+ var details=Label.new();details.text="%d с   /   Попался: %d   /   Серия: %d"%[int(game.elapsed),game.caught,game.best_combo];details.add_theme_font_size_override("font_size",22);box.add_child(details)
  panel_button(box,"ДАЛЬШЕ" if won and game.index<game.CASES.size()-1 else "ПОВТОРИТЬ",func():game.start_case(mini(game.index+1,game.CASES.size()-1) if won and game.index<game.CASES.size()-1 else game.index))
  panel_button(box,"В МЕНЮ",func():game.menu_requested.emit())
 func _input(event):
