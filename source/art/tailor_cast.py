@@ -36,6 +36,15 @@ def mesh_part(name, coordinates, polygons, mat, parent):
     mesh.update()
     if len(mesh.polygons) == 0:
         raise RuntimeError(name + " has no geometry")
+    # The original character materials multiply Base Color by COLOR_0/Col.
+    # Newly authored meshes MUST provide neutral white vertex colors;
+    # otherwise glTF exports their fabric as black/near-black triangles.
+    vertex_colors = mesh.color_attributes.new(
+        name="Col", type="BYTE_COLOR", domain="POINT")
+    for color in vertex_colors.data:
+        color.color = (1.0, 1.0, 1.0, 1.0)
+    if len(vertex_colors.data) != len(mesh.vertices):
+        raise AssertionError("Missing neutral vertex colors: " + name)
     mesh.materials.append(mat)
     ob = bpy.data.objects.new(name, mesh)
     bpy.context.collection.objects.link(ob)
