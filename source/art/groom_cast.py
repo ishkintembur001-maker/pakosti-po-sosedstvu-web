@@ -61,7 +61,7 @@ class HairMesh:
     def lock(self,points,radii,tone,seed):
         if len(points)!=len(radii) or len(points)<4:
             raise RuntimeError("Malformed tapered strand")
-        steps=10
+        steps=8
         start=len(self.vertices)
         pts=[Vector(p) for p in points]
         for i,(point,radius) in enumerate(zip(pts,radii)):
