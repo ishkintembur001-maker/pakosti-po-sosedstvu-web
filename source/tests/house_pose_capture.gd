@@ -2,7 +2,10 @@ extends SceneTree
 func _initialize():call_deferred("run")
 func run():
  var g=load("res://scenes/house.tscn").instantiate();root.add_child(g);await process_frame;g.set_process(false);g.hud.hide()
+ g.player_pos=Vector2(-4.7,1);g.neighbor_pos=Vector2(-3,1);g.floor_id=0;g.neighbor_floor=0
  g.hero.position=Vector3(-4.7,.2,1);g.hero.rotation.y=.1;g.neighbor.position=Vector3(-3,.2,1);g.neighbor.rotation.y=-.1
+ if g.has_meta("user_models_installed"):
+  preload("res://scripts/user_models_integration.gd").update_visual_grounding(g)
  g.camera.projection=Camera3D.PROJECTION_PERSPECTIVE;g.camera.fov=43;g.camera.position=Vector3(-3.8,2.2,6.5);g.camera.look_at(Vector3(-3.85,1.25,1))
  for t in g.targets:t.node.hide()
  for s in g.supplies:s.node.hide()
