@@ -167,12 +167,13 @@ func _process(dt):
  layout_menu()
  if is_instance_valid(active_game):
   music.volume_db=move_toward(music.volume_db,-60.0,dt*52)
-  var danger=active_game.get("alert")
-  var chase=danger!=null and float(danger)>.74
-  var capture=active_game.get("capture_time")
-  var duck=-9.0 if capture!=null and float(capture)>0 else 0.0
-  var pause_flag=active_game.get("paused")
-  var halt=pause_flag!=null and bool(pause_flag)
+  var chase=false
+  var duck=0.0
+  var halt=false
+  if active_game.has_method("tick_enemy"):
+   chase=active_game.alert>.74
+   duck=-9.0 if active_game.capture_time>0 else 0.0
+   halt=active_game.paused
   mission_theme.stream_paused=halt;chase_theme.stream_paused=halt
   mission_theme.volume_db=move_toward(mission_theme.volume_db,(-60.0 if chase else -10.0+duck),dt*25)
   chase_theme.volume_db=move_toward(chase_theme.volume_db,(-12.0+duck if chase else -60.0),dt*25)

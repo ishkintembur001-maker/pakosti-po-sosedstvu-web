@@ -822,24 +822,16 @@ func _input(e):
 	elif e is InputEventScreenDrag:
 		if e.index == stick_finger:
 			touch_joystick(e.position)
-	elif e is InputEventMouseButton and e.button_index == MOUSE_BUTTON_LEFT:
-		if e.pressed:
-			if state == 1 and e.position.x < 257 and e.position.y > 409:
-				stick_finger = -1
-				touch_joystick(e.position)
-				auto_move = false
-			elif state == 1 and ACTION_ZONE.has_point(e.position):
-				auto_move = false
-				on_action()
-			elif state == 1 and e.position.y >= 72 and e.position.y < 422:
-				touch_target(e.position)
-			else:
-				menu_click(e.position)
-		elif stick_finger == -1:
-			stick_finger = -100
-			stick_motion = Vector2.ZERO
-	elif e is InputEventMouseMotion and stick_finger == -1:
-		touch_joystick(e.position)
+	elif e is InputEventMouseButton and e.button_index == MOUSE_BUTTON_LEFT and e.pressed:
+		# Windows never requires dragging the virtual mobile joystick.
+		# One left click is enough to approach a floor, prop, or trap.
+		if state == 1 and ACTION_ZONE.has_point(e.position):
+			auto_move = false
+			on_action()
+		elif state == 1:
+			touch_target(e.position)
+		else:
+			menu_click(e.position)
 	elif e is InputEventKey and e.pressed and not e.echo:
 		if e.keycode == KEY_E or e.keycode == KEY_SPACE:
 			if state == 1: on_action()
