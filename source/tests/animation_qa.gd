@@ -42,13 +42,14 @@ func run():
    if absf(elbow.rotation.x-bend_before)<.20:
     push_error("Picking up an item did not bend the elbow");fail+=1
    p.play("walk");p.seek(0.0,true)
-   var wrist_before=wrist.rotation.z
+   var wrist_before=wrist.quaternion
    p.seek(p.get_animation("walk").length*.25,true)
-   if absf(wrist.rotation.z-wrist_before)<.025:
+   # Blender Z-up to Godot Y-up swaps the imported wrist twist axis.
+   if wrist_before.angle_to(wrist.quaternion)<.025:
     var wrist_animation_paths=[]
     for track_id in range(p.get_animation("walk").get_track_count()):
      var track_path=String(p.get_animation("walk").track_get_path(track_id))
      if track_path.contains("Wrist"):wrist_animation_paths.append(track_path)
-    print("WRIST_QA_DIAGNOSTIC ",actor.name," before=",wrist_before," after=",wrist.rotation.z," tracks=",wrist_animation_paths)
+    print("WRIST_QA_DIAGNOSTIC ",actor.name," before=",wrist_before," after=",wrist.quaternion," tracks=",wrist_animation_paths)
     push_error("Walking did not animate the wrist");fail+=1
  g.queue_free();await process_frame;await process_frame;print("ANIMATION_QA failures=",fail);quit(fail)
