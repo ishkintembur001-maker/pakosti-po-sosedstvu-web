@@ -1,2 +1,5 @@
-# pakosti-po-sosedstvu-web
-Published HTML5 build only — source stays in private Godot repository
+# Пакости по соседству
+
+Проект игры на Godot. Публикация и сгенерированные файлы веб-версии удалены по запросу владельца.
+
+Нативная мобильная разработка ведётся в ветке `development/two-storey-playable`.

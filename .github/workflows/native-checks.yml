@@ -1,16 +1,11 @@
-name: Build and verify Blender + Godot game
+name: Verify native Godot game
 on:
   push:
     branches: [main]
-    paths: ['source/**', 'ci/**', '.github/workflows/pages.yml']
+    paths: ['source/**', 'ci/**', '.github/workflows/native-checks.yml']
   workflow_dispatch:
 permissions:
   contents: read
-  pages: write
-  id-token: write
-concurrency:
-  group: github-pages
-  cancel-in-progress: false
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -21,14 +16,13 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y xvfb libxi6 libxrender1 libxxf86vm1 libxfixes3 libgl1 python3-pil
-          mkdir -p tools dist evidence
+          mkdir -p tools evidence
           curl -fLsS --retry 3 https://download.blender.org/release/Blender4.3/blender-4.3.2-linux-x64.tar.xz -o tools/blender.tar.xz
           tar -xf tools/blender.tar.xz -C tools
           curl -fLsS --retry 3 https://github.com/godotengine/godot-builds/releases/download/4.4.1-stable/Godot_v4.4.1-stable_linux.x86_64.zip -o tools/godot.zip
           unzip -q tools/godot.zip -d tools
           curl -fLsS --retry 3 https://github.com/godotengine/godot-builds/releases/download/4.4.1-stable/Godot_v4.4.1-stable_export_templates.tpz -o tools/templates.tpz
           mkdir -p ~/.local/share/godot/export_templates/4.4.1.stable
-          unzip -oj tools/templates.tpz templates/web_nothreads_release.zip -d ~/.local/share/godot/export_templates/4.4.1.stable
           chmod +x tools/Godot_v4.4.1-stable_linux.x86_64
       - name: Rebuild textures and Blender models from source
         run: |
@@ -52,12 +46,6 @@ jobs:
           xvfb-run -a tools/Godot_v4.4.1-stable_linux.x86_64 --audio-driver Dummy --path source --rendering-method gl_compatibility --script res://tests/performance_qa.gd > evidence/performance-qa.log 2>&1
           test -s evidence/gameplay.png
           test -s evidence/cast.png
-      - name: Export verified WebGL2 build
-        run: |
-          tools/Godot_v4.4.1-stable_linux.x86_64 --headless --path source --export-release Web ../dist/index.html > evidence/export.log 2>&1
-          python3 ci/finish_web.py
-          test -s dist/index.pck
-          test -s dist/index.wasm
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -69,16 +57,3 @@ jobs:
           path: |
             source/art/apartment_cast.blend
             source/assets/models/apartment_cast.glb
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - uses: actions/configure-pages@v5
-      - id: deployment
-        uses: actions/deploy-pages@v4
