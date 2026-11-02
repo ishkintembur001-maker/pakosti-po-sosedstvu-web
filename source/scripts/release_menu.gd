@@ -15,6 +15,7 @@ var sfx_level=.75
 var continue_button:Button
 var quality=true
 func _ready():
+ if OS.has_feature("windows"):DisplayServer.window_set_size(Vector2i(1280,720))
  settings.load(SAVE);music_level=clampf(float(settings.get_value("audio","music",.55)),0,1);sfx_level=clampf(float(settings.get_value("audio","sfx",.75)),0,1)
  for name in ["Music","SFX"]:
   if AudioServer.get_bus_index(name)<0:AudioServer.add_bus();AudioServer.set_bus_name(AudioServer.bus_count-1,name)

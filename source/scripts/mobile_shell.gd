@@ -15,7 +15,7 @@ func _ready():
  _process(0)
 func _process(_dt):
  var size=get_viewport().get_visible_rect().size
- var portrait=size.y>size.x
+ var portrait=OS.has_feature("mobile") and size.y>size.x
  overlay.visible=portrait
  if portrait:
   heading.position=Vector2(32,size.y*.32);heading.size=Vector2(size.x-64,80)

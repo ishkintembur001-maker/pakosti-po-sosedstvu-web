@@ -42,24 +42,29 @@ func _draw():
 		label_at(Vector2(30,108),"Собери предметы • Подстрой ловушки",12,MUTED)
 		for j in range(game.lives):
 			draw_circle(Vector2(922-j*19,73),5,Color("#dc8c78"))
-		# Translucent controls leave the apartment visible behind them.
-		var c:Vector2=game.STICK_CENTER
-		draw_circle(c,58,Color(.045,.09,.105,.76))
-		draw_arc(c,55,0,TAU,64,Color(.8,.71,.52,.65),2)
-		for a in [0,PI/2,PI,PI*1.5]:
-			var q=c+Vector2(cos(a),sin(a))*42
-			draw_circle(q,2,Color(.8,.8,.7,.4))
-		var nub=c+game.joystick_vector()*34
-		draw_circle(nub+Vector2(0,3),23,Color(0,0,0,.3))
-		draw_circle(nub,22,Color("#c6aa78"))
-		draw_circle(nub+Vector2(-5,-6),6,Color(.95,.87,.69,.5))
+		# Virtual stick is for touchscreens; PC shows a point-and-click hint.
+		if OS.has_feature("mobile"):
+			var c:Vector2=game.STICK_CENTER
+			draw_circle(c,58,Color(.045,.09,.105,.76))
+			draw_arc(c,55,0,TAU,64,Color(.8,.71,.52,.65),2)
+			for a in [0,PI/2,PI,PI*1.5]:
+				var q=c+Vector2(cos(a),sin(a))*42
+				draw_circle(q,2,Color(.8,.8,.7,.4))
+			var nub=c+game.joystick_vector()*34
+			draw_circle(nub+Vector2(0,3),23,Color(0,0,0,.3))
+			draw_circle(nub,22,Color("#c6aa78"))
+			draw_circle(nub+Vector2(-5,-6),6,Color(.95,.87,.69,.5))
+		else:
+			panel(Rect2(17,466,228,60),Color(.055,.10,.12,.91),GOLD,1)
+			label_at(Vector2(30,490),"ЛЕВАЯ КНОПКА МЫШИ",13,GOLD)
+			label_at(Vector2(30,511),"ИДТИ  •  ВЗЯТЬ  •  ЛОВУШКА",11,MUTED)
 		for i in range(game.traps.size()):
 			var t=game.traps[i]
 			inventory_card(262+i*115,476,i,game.inventory[i],t["used"] or t["armed"])
 		var hint:String=game.action_hint()
 		panel(game.ACTION_ZONE,Color("#957047") if hint!="" else Color(.085,.13,.15,.90),GOLD if hint!="" else Color(.4,.48,.47,.6),1)
 		centered(849,487,"ДЕЙСТВИЕ",18)
-		centered(849,509,"КОСНИСЬ  /  E",10,GOLD)
+		centered(849,509,"ЩЁЛКНИ" if not OS.has_feature("mobile") else "КОСНИСЬ",10,GOLD)
 		if game.message_timer>0:
 			var msg:String=game.message
 			if msg.length()>65:msg=msg.left(62)+"…"
