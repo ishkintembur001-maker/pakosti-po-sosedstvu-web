@@ -7,9 +7,14 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  pages: write
+  id-token: write
 jobs:
   preview:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -73,6 +78,19 @@ jobs:
         with:
           name: pakosti-iphone-safari-preview
           path: web-preview/
+      # Deploy only the tested Web output. The original main branch remains untouched.
+      - name: Configure Pages for the public playtest
+        if: github.event_name != 'pull_request'
+        uses: actions/configure-pages@v5
+      - name: Upload playable Web build to GitHub Pages
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: web-preview/
+      - name: Publish playable iPhone Safari preview
+        if: github.event_name != 'pull_request'
+        id: deploy
+        uses: actions/deploy-pages@v4
       - name: Configure Android SDK and debug signing
         run: |
           export ANDROID_SDK_ROOT="${ANDROID_HOME}"
