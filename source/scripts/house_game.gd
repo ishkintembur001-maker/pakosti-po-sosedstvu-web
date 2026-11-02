@@ -4,6 +4,9 @@ const H=3.35
 const SPEED=3.4
 const STAIR_BOTTOM=Vector2(6.8,2.75)
 const STAIR_TOP=Vector2(6.8,-1.8)
+const STAIR_ENTRY_LOWER=Vector2(6.7,1.8)
+const STAIR_ENTRY_UPPER=Vector2(5.0,-2.15)
+const STAIR_DURATION=3.1
 const MODEL=preload("res://assets/models/two_storey.glb")
 const CUTAWAY_SHADER=preload("res://shaders/cutaway.gdshader")
 const CONTACT_SHADER=preload("res://shaders/contact_shadow.gdshader")
@@ -45,6 +48,10 @@ var pending_action=""
 var escape_ready=false
 var escape_route=false
 var exit_marker:Node3D
+var interactables
+var stair_markers:Array=[]
+var message_time:float=0.0
+var message_text:String=""
 var index=0
 var floor_id=0
 var player_pos=Vector2(4.2,1.1)
@@ -168,6 +175,10 @@ func _ready():
  cool_room_fill.light_color=Color("d0e4f5");cool_room_fill.light_energy=.19
  cool_room_fill.omni_range=9.5;cool_room_fill.omni_attenuation=1.8
  cool_room_fill.shadow_enabled=false;add_child(cool_room_fill)
+ interactables=preload("res://scripts/house_interactables.gd").new()
+ interactables.game=self;add_child(interactables)
+ interactables.build()
+ build_stair_markers()
  var canvas=CanvasLayer.new();add_child(canvas);hud=hud_script.new();hud.game=self;canvas.add_child(hud)
  for k in ["pickup","arm","prank","caught","victory"]:
   var p=AudioStreamPlayer.new();p.stream=load("res://assets/sfx/%s.wav"%k);p.bus="SFX";add_child(p);sfx[k]=p
@@ -175,6 +186,26 @@ func _ready():
  start_case(index)
  var cfg=ConfigFile.new();cfg.load("user://pakosti_release.cfg");set_quality(bool(cfg.get_value("graphics","detail",not OS.has_feature("mobile"))))
 
+func show_notice(message:String)->void:
+ message_text=message;message_time=2.5
+func build_stair_markers()->void:
+ for floor in range(2):
+  var pos:Vector2=STAIR_ENTRY_LOWER if floor==0 else STAIR_ENTRY_UPPER
+  var marker=Node3D.new();marker.name="StairEntrance_%d"%floor
+  marker.position=Vector3(pos.x,floor_height(pos,floor)+.02,pos.y)
+  add_child(marker)
+  var glow=MeshInstance3D.new();var mesh=TorusMesh.new()
+  mesh.inner_radius=.32;mesh.outer_radius=.43;glow.mesh=mesh
+  var material=StandardMaterial3D.new();material.albedo_color=Color("eabf72")
+  material.emission_enabled=true;material.emission=Color("b6813f")
+  material.emission_energy_multiplier=.3
+  glow.material_override=material;marker.add_child(glow)
+  var label=Label3D.new()
+  label.text="↑ ПОДНЯТЬСЯ" if floor==0 else "↓ СПУСТИТЬСЯ"
+  label.pixel_size=.005;label.font_size=28;label.position.y=.7
+  label.billboard=BaseMaterial3D.BILLBOARD_ENABLED
+  marker.add_child(label)
+  stair_markers.append(marker)
 func floor_height(p:Vector2,f:int)->float:
  if floor_data.is_empty():return .20+f*H
  var w=int(floor_data.width);var d=int(floor_data.depth);var cell_size=float(floor_data.cell)
@@ -252,6 +283,9 @@ func start_case(n:int):
  for t in targets:t.node.queue_free()
  for t in supplies:t.node.queue_free()
  targets.clear();supplies.clear();if is_instance_valid(exit_marker):exit_marker.queue_free()
+ if is_instance_valid(interactables):
+  interactables.reset_doors()
+  interactables.reset_caches(index)
  inventory=[0,0,0,0,0,0,0,0];capture_voice_caption="";if is_instance_valid(neighbor_voice):neighbor_voice.stop();lives=3;caught=0;elapsed=0;action_time=0;stick=Vector2.ZERO;hidden=false;reaction=0;anger=0;anger_events=0;bonus_awarded=false;combo=0;best_combo=0;combo_timer=0;capture_time=0;action_pose="pickup";safe_time=4;alert=0;climbing=0;state="playing";player_path.clear();enemy_path.clear();enemy_climbing=0;enemy_search_time=0;enemy_repath_time=0;enemy_path_goal=Vector2.INF;pursuit_memory=0;noise_timer=0;noise_floor=0;last_seen_pos=Vector2.ZERO;waypoint=1
  var tasks:Array=CASES[index].tasks
  for i in range(tasks.size()):
@@ -378,13 +412,22 @@ func complete_walk_action():
   "interact":act()
   "stairs":
    if near_stair():start_climb()
+  "door":
+   var door=interactables.door_at(player_pos,floor_id,1.40)
+   if not door.is_empty():interactables.toggle(door.id)
+  "search":
+   var cache=interactables.cache_at(player_pos,floor_id,1.20)
+   if not cache.is_empty():interactables.search(cache.id)
   "hide":
    if near_hide():act()
   "exit":finish_escape()
+func hud_action():
+ if escape_ready:guide_to_exit()
+ else:act()
 func guide_to_exit():
  if not escape_ready or paused or state!="playing":return
  escape_route=true
- if floor_id==1:walk_to(Vector2(5.0,-2.15),"stairs")
+ if floor_id==1:walk_to(STAIR_ENTRY_UPPER,"stairs")
  else:walk_to(EXIT_POS,"exit")
 func bonus_description()->String:
  var rule=String(CASES[index].bonus_rule)
@@ -415,11 +458,15 @@ func hint()->String:
   if not s.taken and floor_id==s.floor and player_pos.distance_to(s.pos)<.95:return "ВЗЯТЬ: "+NAMES[s.kind]
  for t in targets:
   if not t.used and not t.armed and floor_id==t.floor and player_pos.distance_to(t.pos)<.95:return ("УСТАНОВИТЬ: " if inventory[t.kind]>0 else "НАЙДИ: ")+t.label
+ if not interactables.cache_at(player_pos,floor_id).is_empty():return "ОБЫСКАТЬ: НАЙТИ ДЕТАЛИ"
+ if not interactables.door_at(player_pos,floor_id).is_empty():
+  var door=interactables.door_at(player_pos,floor_id)
+  return "ЗАКРЫТЬ ДВЕРЬ" if door.open else "ОТКРЫТЬ ДВЕРЬ"
  if near_stair():return "ПОДНЯТЬСЯ" if floor_id==0 else "СПУСТИТЬСЯ"
  if near_hide():return "СПРЯТАТЬСЯ"
  return "ДЕЙСТВИЕ"
 func near_stair()->bool:
- return player_pos.distance_to(Vector2(6.7,1.8) if floor_id==0 else Vector2(5.0,-2.15))<1.1
+ return player_pos.distance_to(STAIR_ENTRY_LOWER if floor_id==0 else STAIR_ENTRY_UPPER)<1.1
 func near_hide()->bool:return player_pos.distance_to(Vector2(-7.1,1.5))<1 or player_pos.distance_to(Vector2(3.25,2.5))<1
 func report_noise(p:Vector2,f:int,loudness:float=1.0):
  if state!="playing":return
@@ -435,10 +482,22 @@ func act():
   if not t.used and not t.armed and floor_id==t.floor and player_pos.distance_to(t.pos)<.95:
    if inventory[t.kind]>0:t.armed=true;inventory[t.kind]-=1;play("arm");report_noise(t.pos,t.floor,.8);action_pose="plant_trap";action_time=.8
    return
+ var cache=interactables.cache_at(player_pos,floor_id)
+ if not cache.is_empty():
+  interactables.search(cache.id);return
  if near_stair():start_climb();return
+ var door=interactables.door_at(player_pos,floor_id)
+ if not door.is_empty():
+  interactables.toggle(door.id);return
  if near_hide():hidden=true;player_path.clear()
 func start_climb():
- climbing=3.1;climb_from=floor_id;climb_to=1-floor_id;climb_start=player_pos;climb_end=Vector2(5.0,-2.15) if floor_id==0 else Vector2(6.7,1.8);hidden=false;player_path.clear();set_slice()
+ if not near_stair() or climbing>0 or paused or state!="playing":return
+ climbing=STAIR_DURATION;climb_from=floor_id;climb_to=1-floor_id
+ climb_start=player_pos
+ climb_end=STAIR_ENTRY_UPPER if floor_id==0 else STAIR_ENTRY_LOWER
+ hidden=false;player_path.clear();pending_action="";pending_target=Vector2.INF
+ show_notice("ПОДНИМАЕМСЯ НА ВТОРОЙ ЭТАЖ" if climb_to==1 else "СПУСКАЕМСЯ НА ПЕРВЫЙ ЭТАЖ")
+ set_slice()
 func finish_prank(t):
  t.used=true;t.armed=false;t.node.hide();reaction=2.5;reaction_kind=t.kind;play("prank")
  noise_timer=0
@@ -548,14 +607,15 @@ func tick_enemy(dt:float):
   var speed=1.15+anger*.75+float(CASES[index].difficulty)*.10
   if chasing:speed=2.3+anger*1.35+float(CASES[index].difficulty)*.12
   elif investigate:speed=1.5+anger*.75+float(CASES[index].difficulty)*.10
-  neighbor_pos+=step.limit_length(dt*speed)
+  var next_pos=neighbor_pos+step.limit_length(dt*speed)
+  if not interactables.obstructs_step(next_pos,neighbor_floor):neighbor_pos=next_pos
  for trap in targets:
   if trap.armed and not trap.used and neighbor_floor==trap.floor and neighbor_pos.distance_to(trap.pos)<.45:finish_prank(trap);return
  if can_see and diff.length()<.62:begin_capture()
 func clear_line(a:Vector2,b:Vector2,f:int)->bool:
  for i in range(1,15):
   var sample=a.lerp(b,float(i)/15)
-  if blocked(sample,f):return false
+  if blocked(sample,f) or interactables.opaque_at(sample,f):return false
   if has_meta("user_models_installed") and preload("res://scripts/user_models_integration.gd").scan_obstacle(self,sample,f):return false
  return true
 func _process(dt:float):
@@ -567,7 +627,7 @@ func _process(dt:float):
  if is_instance_valid(cool_room_fill):
   cool_room_fill.position.y=3.6+floor_id*H
  if state=="won":animate(hero,0,99)
- elapsed+=dt;safe_time=maxf(0,safe_time-dt);action_time=maxf(0,action_time-dt);combo_timer=maxf(0,combo_timer-dt)
+ elapsed+=dt;safe_time=maxf(0,safe_time-dt);action_time=maxf(0,action_time-dt);combo_timer=maxf(0,combo_timer-dt);message_time=maxf(0,message_time-dt)
  if combo_timer<=0:combo=0
  if capture_time>0:
   tick_capture(dt)
@@ -576,16 +636,21 @@ func _process(dt:float):
  var neighbor_before=neighbor_pos
  if state=="playing":
   if climbing>0:
-   climbing=maxf(0,climbing-dt);var t=1-climbing/3.1
+   climbing=maxf(0,climbing-dt);var t=1-climbing/STAIR_DURATION
    # Walk to the stairs, ascend their 18 physical risers, then step onto landing.
    var p:Vector2;var height:float
    if t<.18:p=climb_start.lerp(STAIR_BOTTOM if climb_from==0 else STAIR_TOP,t/.18);height=climb_from*H
    elif t<.82:
     var s=(t-.18)/.64;p=(STAIR_BOTTOM if climb_from==0 else STAIR_TOP).lerp(STAIR_TOP if climb_from==0 else STAIR_BOTTOM,s);height=lerpf(climb_from*H,climb_to*H,s)
    else:p=(STAIR_TOP if climb_from==0 else STAIR_BOTTOM).lerp(climb_end,(t-.82)/.18);height=climb_to*H
-   hero.position=Vector3(p.x,.2+height,p.y);animate(hero,1,0)
+   hero.position=Vector3(p.x,.2+height,p.y)
+   var advance=Vector2(p.x,p.y)-player_pos
+   if advance.length()>.001:hero.rotation.y=lerp_angle(hero.rotation.y,atan2(advance.x,advance.y),minf(1,dt*8))
+   animate(hero,1,0)
    if climbing<=0:
-    floor_id=climb_to;player_pos=climb_end;set_slice()
+    floor_id=climb_to;player_pos=climb_end
+    hero.position=Vector3(player_pos.x,floor_height(player_pos,floor_id),player_pos.y)
+    set_slice()
     if escape_route:guide_to_exit()
   else:move_player(dt)
   tick_enemy(dt)
@@ -622,7 +687,7 @@ func move_player(dt:float):
  if not hidden and action_time<=0:
   var step=motion*SPEED*dt
   for axis in [Vector2(step.x,0),Vector2(0,step.y)]:
-   if not blocked(player_pos+axis,floor_id):player_pos+=axis
+   if not blocked(player_pos+axis,floor_id) and not interactables.obstructs_step(player_pos+axis,floor_id):player_pos+=axis
  hero.position=Vector3(player_pos.x,floor_height(player_pos,floor_id)-.015*hero.scale.y,player_pos.y)
  if motion.length()>.1:hero.rotation.y=lerp_angle(hero.rotation.y,atan2(motion.x,motion.y),minf(1,dt*12))
  var actual_walk=player_pos.distance_to(player_before)>.001
@@ -676,6 +741,13 @@ func set_quality(enabled:bool):
 func click_world(p:Vector2):
  if paused or state!="playing" or climbing>0:return
  if hidden:hidden=false
+ var object=interactables.clicked(p,floor_id)
+ if not object.is_empty():
+  escape_route=false
+  var at:Vector2=object.pos
+  var goal_pos=interactables.approach(at,player_pos) if object.type=="door" else at
+  walk_to(goal_pos,object.type)
+  return
  var closest=68.0;var selected=Vector2.INF
  for item in supplies+targets:
   if item.floor!=floor_id or (item.has("taken") and item.taken) or (item.has("used") and (item.used or item.armed)):continue
@@ -687,7 +759,7 @@ func click_world(p:Vector2):
  if escape_ready and floor_id==0:
   var exit_screen=camera.unproject_position(Vector3(EXIT_POS.x,.6,EXIT_POS.y))
   if exit_screen.distance_to(p)<80:guide_to_exit();return
- var stair_pos=Vector2(6.7,1.8) if floor_id==0 else Vector2(5.0,-2.15)
+ var stair_pos=STAIR_ENTRY_LOWER if floor_id==0 else STAIR_ENTRY_UPPER
  var stair_screen=camera.unproject_position(Vector3(stair_pos.x,.5+floor_id*H,stair_pos.y))
  if stair_screen.distance_to(p)<70:
   escape_route=false;walk_to(stair_pos,"stairs");return
