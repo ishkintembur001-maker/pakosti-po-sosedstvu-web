@@ -138,6 +138,9 @@ func _ready():
  for c in actor_source.find_children("*","Camera3D",true,false):c.current=false
  for light in actor_source.find_children("*","Light3D",true,false):light.visible=false
  make_slices(environment_root)
+ # Only swap graphics when the COMPLETE owner-supplied GLB pack is installed.
+ # The original physics, missions, pathfinding, staircase and AI remain intact.
+ preload("res://scripts/user_models_integration.gd").try_install(self)
  for f in range(2):navs.append(build_nav(f))
  camera=Camera3D.new();camera.projection=Camera3D.PROJECTION_ORTHOGONAL;camera.size=10.2;add_child(camera);camera.current=true
  shadow=DirectionalLight3D.new();shadow.rotation_degrees=Vector3(-55,-25,0);shadow.light_color=Color("fff4e5");shadow.light_energy=.22;shadow.shadow_enabled=true;shadow.directional_shadow_max_distance=32;add_child(shadow)
