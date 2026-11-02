@@ -30,7 +30,7 @@ jobs:
           chmod +x tools/Godot_v4.4.1-stable_linux.x86_64
           curl -fLsS --retry 3 https://github.com/godotengine/godot-builds/releases/download/4.4.1-stable/Godot_v4.4.1-stable_export_templates.tpz -o tools/templates.tpz
           mkdir -p ~/.local/share/godot/export_templates/4.4.1.stable
-          unzip -oj tools/templates.tpz templates/android_debug.apk -d ~/.local/share/godot/export_templates/4.4.1.stable
+          unzip -oj tools/templates.tpz templates/android_debug.apk templates/android_release.apk -d ~/.local/share/godot/export_templates/4.4.1.stable
           unzip -oj tools/templates.tpz templates/web_debug.zip templates/web_release.zip templates/web_nothreads_debug.zip templates/web_nothreads_release.zip -d ~/.local/share/godot/export_templates/4.4.1.stable
       - name: Build original and new Blender assets
         run: |
@@ -96,6 +96,9 @@ jobs:
           export ANDROID_SDK_ROOT="${ANDROID_HOME}"
           test -x "${ANDROID_SDK_ROOT}/platform-tools/adb"
           test -d "${JAVA_HOME_17_X64}"
+          test -s "$HOME/.local/share/godot/export_templates/4.4.1.stable/android_debug.apk"
+          test -s "$HOME/.local/share/godot/export_templates/4.4.1.stable/android_release.apk"
+          test -x "${ANDROID_SDK_ROOT}/platform-tools/adb"
           keytool -genkeypair -noprompt -keystore "${RUNNER_TEMP}/pakosti-debug.keystore" -alias androiddebugkey -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
           echo "GODOT_ANDROID_KEYSTORE_DEBUG_PATH=${RUNNER_TEMP}/pakosti-debug.keystore" >> "${GITHUB_ENV}"
           echo "GODOT_ANDROID_KEYSTORE_DEBUG_USER=androiddebugkey" >> "${GITHUB_ENV}"
