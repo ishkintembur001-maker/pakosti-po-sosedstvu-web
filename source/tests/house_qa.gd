@@ -106,6 +106,27 @@ func run():
  check(g.enemy_climbing>0,"Neighbor did not start ascending the staircase")
  for step in range(190):g.tick_enemy(1.0/60)
  check(g.enemy_climbing==0 and g.neighbor_floor==1,"Neighbor must finish stair ascent")
+ # Validate full pathfinding to the stair entrances, not just stair animation.
+ g.start_case(9)
+ g.neighbor_floor=1;g.neighbor_pos=Vector2(-4.1,1.1)
+ g.floor_id=0;g.player_pos=Vector2(4.2,1.1)
+ g.enemy_search_time=16;g.alert=1.0;g.enemy_path.clear()
+ var actually_descended=false
+ for frame in range(1350):
+  g.tick_enemy(1.0/60)
+  if g.neighbor_floor==0:
+   actually_descended=true;break
+ check(actually_descended,"Neighbor could not navigate from upper patrol corridor to downstairs")
+ g.start_case(0)
+ g.neighbor_floor=0;g.neighbor_pos=Vector2(-4.1,1.1)
+ g.floor_id=1;g.player_pos=Vector2(5.0,-2.15)
+ g.enemy_search_time=16;g.alert=1.0;g.enemy_path.clear()
+ var actually_ascended=false
+ for frame in range(1350):
+  g.tick_enemy(1.0/60)
+  if g.neighbor_floor==1:
+   actually_ascended=true;break
+ check(actually_ascended,"Neighbor could not navigate from lower patrol corridor to upstairs")
  g.start_case(0);check(g.particles.is_empty(),"Temporary prank effects leaked between levels")
  g.caught=0;check(g.qualifies_bonus(),"No-capture bonus should count")
  g.caught=1;check(not g.qualifies_bonus(),"No-capture bonus should fail after capture")
