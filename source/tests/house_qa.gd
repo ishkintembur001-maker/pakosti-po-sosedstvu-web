@@ -22,15 +22,16 @@ func run():
   check(g.targets.size()>=4 and g.targets.size()<=8,"Expected 4–8 pranks per mission")
   check(g.targets.size()==g.supplies.size(),"Each prank needs a corresponding item")
   check(g.CASES[level].tasks.size()==g.targets.size(),"Mission blueprint and active targets mismatch")
-  check(g.route.size()==g.targets.size(),"Patrol route must contain all mission traps")
-  for location in g.route:
-   check(g.targets.any(func(trap):return trap.pos==location),"Patrol route includes a non-mission destination")
-  var sorted_route=g.route.duplicate()
+  check(g.route.size()>=g.targets.size()+2,"Patrol route must cover the hallway and all mission traps")
+  check(g.route[0]==Vector2(-4.1,1.1) and g.route[1]==Vector2(3.7,1.1),"Initial full sweep is missing")
+  for location in g.route.slice(2):
+   check(g.targets.any(func(trap):return trap.pos==location),"Patrol route contains a non-mission waypoint")
+  var sorted_route=g.route.slice(2)
   sorted_route.sort_custom(func(a,b):return a.x<b.x)
-  if level%4==0:check(g.route==sorted_route,"Ascending patrol order is incorrect")
+  if level%4==0:check(g.route.slice(2)==sorted_route,"Ascending patrol order is incorrect")
   if level%4==1:
    sorted_route.reverse()
-   check(g.route==sorted_route,"Descending patrol order is incorrect")
+   check(g.route.slice(2)==sorted_route,"Descending patrol order is incorrect")
   for trap_prop in g.targets:
    var prop=trap_prop.node.find_child("PrankProp",true,false)
    check(is_instance_valid(prop),"Missing 3D prank prop")

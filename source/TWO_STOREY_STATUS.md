@@ -37,3 +37,7 @@ The camera and cutaway shader now show both existing floors simultaneously. Item
 ## Patrol route fixes
 
 The neighbor now uses mission-specific routes built from the actual trap sites. Four patterns alternate between left-to-right, right-to-left and two zigzags, all containing every active trap. Native tests cover route completeness for all 24 missions. This does not yet implement unique household schedules or full AI investigation for every authored storyline.
+
+## Patrol regression repair
+
+QA detected that route-only zigzags could strand a triggered prank in missions 14 and 22. Each mission now starts with a guaranteed full hallway sweep from x=-4.1 to x=3.7 before executing its individual patrol order. Tests enforce this safety sweep and still validate mission-specific waypoints. This correction must pass Godot CI before declaring the new behavior verified.

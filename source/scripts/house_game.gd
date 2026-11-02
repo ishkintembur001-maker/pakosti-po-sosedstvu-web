@@ -266,7 +266,10 @@ func build_patrol_route():
     zigzag.append(sorted_points[right]);right-=1
     if left<=right:zigzag.append(sorted_points[left]);left+=1
   sorted_points=zigzag
- route=sorted_points
+ # First do a full guaranteed sweep of the prank corridor. Mission-specific
+ # zigzags follow it, but can never strand an active target at either end.
+ route=[Vector2(-4.1,1.1),Vector2(3.7,1.1)]
+ route.append_array(sorted_points)
  waypoint=0
 func prop_piece(root:Node3D,mesh:PrimitiveMesh,color:Color,position:Vector3,size:Vector3)->void:
  var part=MeshInstance3D.new()
