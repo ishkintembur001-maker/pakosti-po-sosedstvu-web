@@ -7,6 +7,17 @@ const LOWER = "res://assets/user_models/house_lower_quality.glb"
 const UPPER = "res://assets/user_models/house_upper_quality.glb"
 const ROOF = "res://assets/user_models/house_roof_quality.glb"
 const PATHS = [HERO, NEIGHBOR, LOWER, UPPER, ROOF]
+# Optional full-fidelity owner geometry; the three files come from the
+# exact full model supplied by the owner, preserving every triangle.
+const LOWER_MASTER = "res://assets/user_models/house_lower_master.glb"
+const UPPER_MASTER = "res://assets/user_models/house_upper_master.glb"
+const ROOF_MASTER = "res://assets/user_models/house_roof_master.glb"
+const MASTER_PATHS = [HERO, NEIGHBOR, LOWER_MASTER, UPPER_MASTER, ROOF_MASTER]
+
+static func master_available() -> bool:
+ for resource_path in MASTER_PATHS:
+  if not ResourceLoader.exists(resource_path):return false
+ return true
 
 static func available() -> bool:
  for resource_path in PATHS:
@@ -34,8 +45,10 @@ static func try_install(game) -> bool:
  if not available():
   push_error("ORIGINAL_OWNER_MODELS_MISSING: all five original GLB models are required")
   return false
+ var full_geometry=not OS.has_feature("mobile") and master_available()
+ var selected_paths=MASTER_PATHS if full_geometry else PATHS
  var loaded=[]
- for resource_path in PATHS:
+ for resource_path in selected_paths:
   var model=_create_model(resource_path)
   if model==null:
    for old in loaded:old.free()
@@ -81,7 +94,10 @@ static func try_install(game) -> bool:
  game.neighbor.set_meta("animation_player",neighbor_anim)
  game.environment_root.hide()
  game.set_meta("user_models_installed",true)
- print("OWNER_3D_MODELS_ENABLED: hero, neighbor, both storeys, roof hidden")
+ game.set_meta("house_geometry_profile", "LOSSLESS_ALL_OWNER_TRIANGLES" if full_geometry else "MOBILE_OWNER_LOD")
+ game.set_meta("owner_roof_mesh",loaded[4])
+ print("OWNER_3D_MODELS_ENABLED: hero, neighbor, BOTH storeys, roof retained")
+ print("OWNER_HOUSE_GEOMETRY_PROFILE:",game.get_meta("house_geometry_profile"))
  return true
 
 # Use geometry sampled from the real scan. This changes visuals only,

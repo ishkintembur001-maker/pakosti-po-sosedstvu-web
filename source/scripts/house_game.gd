@@ -661,8 +661,13 @@ func _process(dt:float):
  hero.visible=not hidden;neighbor.visible=true # Both visible floors remain part of one dollhouse.
  update_contact(hero_contact,hero,player_pos,floor_id,not hidden and climbing<=0)
  update_contact(neighbor_contact,neighbor,neighbor_pos,neighbor_floor,neighbor.visible and enemy_climbing<=0)
- var focus=hero.position+Vector3(0,.8,0);var target=Vector3(clampf(focus.x,-3,3),H*.65,0)
- camera.position=target+Vector3(1.2,7.5,17);camera.look_at(target)
+ # Never pan or crop the original two-storey model while following the hero.
+ var visible_size=get_viewport().get_visible_rect().size
+ var aspect=float(visible_size.x)/maxf(1.0,float(visible_size.y))
+ var house_target=Vector3(0.0,H,0.0)
+ camera.size=maxf(11.5,15.8/maxf(.5,aspect))
+ camera.position=house_target+Vector3(0.0,7.0,18.0)
+ camera.look_at(house_target)
  for i in range(particles.size()-1,-1,-1):
   var p=particles[i];p.life-=dt;p.node.position+=p.velocity*dt;p.velocity.y-=dt*4
   if p.life<=0:p.node.queue_free();particles.remove_at(i)
