@@ -2,7 +2,7 @@
 
 ## Playable
 
-A six-room two-storey house with an 18-step staircase, 24 challenge variants with 4–8 prank targets using the existing trap types, inventory, hiding, patrol/chase, saved progress and scores. The original four classic episodes remain available. The 24 long-form narrative missions in assets/data/campaign_24_design.json remain designs, distinct from the playable challenge variants. These reuse the existing house and traps. The neighbor's anger, range and chase speed escalate as traps fire. A catch starts a short slapstick scene and loses one life.
+A six-room two-storey house with an 18-step staircase, 24 playable mission-specific setups across six chapters, with 4–8 named traps, eight game-effect families and score bonuses, inventory, hiding, patrol/chase, saved progress and scores. The original four classic episodes remain available. The long-form storyboard from assets/data/campaign_24_design.json remains a design. The playable campaign now has 24 different mission titles, goals, named task sets, difficulty tiers and optional score bonuses on the existing six rooms. All 24 are playable variants of the established collection/arm/wait/escape mechanics. Requested individual prop animations, moving toys, visitors, puzzle minigames and true multi-floor neighbor patrol are not yet implemented; do not advertise them as finished. The neighbor's anger, range and chase speed escalate as traps fire. A catch starts a short slapstick scene and loses one life.
 
 ## Mobile interface
 

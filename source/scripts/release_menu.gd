@@ -70,7 +70,7 @@ func dialog(title:String)->VBoxContainer:
 func close_button(box:VBoxContainer):
  var b=Button.new();b.text="НАЗАД";b.custom_minimum_size.y=68;b.pressed.connect(dismiss);box.add_child(b)
 func open_cases():
- settings.load(SAVE);var unlocked=int(settings.get_value("house","unlocked",0));var box=dialog("ВЫБЕРИ ИСПЫТАНИЕ")
+ settings.load(SAVE);var unlocked=int(settings.get_value("house","unlocked",0));var box=dialog("КАМПАНИЯ — 24 МИССИИ")
  var scroll=ScrollContainer.new();scroll.custom_minimum_size=Vector2(660,290);scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED;box.add_child(scroll)
  var grid=GridContainer.new();grid.columns=2;grid.add_theme_constant_override("h_separation",10);grid.add_theme_constant_override("v_separation",8);scroll.add_child(grid)
  for i in range(preload("res://scripts/house_game.gd").CASES.size()):

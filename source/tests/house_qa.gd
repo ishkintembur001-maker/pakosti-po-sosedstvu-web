@@ -16,11 +16,24 @@ func run():
  var launch_touch=InputEventScreenTouch.new();launch_touch.index=0;launch_touch.position=Vector2(200,257);launch_touch.pressed=true;menu._input(launch_touch)
  check(is_instance_valid(menu.active_game),"Menu screen touch did not launch game")
  var g=menu.active_game;g.set_process(false)
- check(g.CASES.size()==24,"Expected 24 playable challenge variants")
+ check(g.CASES.size()==24,"Expected 24 playable campaign missions")
  for level in range(24):
   g.start_case(level)
   check(g.targets.size()>=4 and g.targets.size()<=8,"Expected 4–8 pranks per mission")
   check(g.targets.size()==g.supplies.size(),"Each prank needs a corresponding item")
+  check(g.CASES[level].tasks.size()==g.targets.size(),"Mission blueprint and active targets mismatch")
+  check(String(g.CASES[level].id)=="m%02d"%(level+1),"Mission id invalid")
+  var unique_slots={}
+  for trap in g.targets:
+   check(not unique_slots.has(trap.pos),"Duplicate target in mission")
+   unique_slots[trap.pos]=true
+   check(not g.path(g.player_pos,trap.pos,int(trap.floor)).is_empty(),"Trap location unreachable")
+   check(not String(trap.label).is_empty(),"Mission target lacks specific description")
+  for supply in g.supplies:
+   check(not g.path(g.player_pos,supply.pos,0).is_empty(),"Supply unreachable in case %d"%level)
+  for trap in g.targets:g.finish_prank(trap)
+  check(g.escape_ready and g.anger_events==g.targets.size(),"Mission cannot complete its own tasks")
+  check(g.targets.all(func(trap):return trap.used),"Mission reaction count mismatch")
  for mission in range(8):
   g.start_case(mission)
   for item in g.supplies:

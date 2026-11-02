@@ -51,7 +51,7 @@ func refresh():
  elif armed+done<game.targets.size():objective.text="ЦЕЛЬ: УСТАНОВИТЬ ЛОВУШКИ %d/%d   /   ЖИЗНИ %d"%[armed+done,game.targets.size(),game.lives]
  else:objective.text="ЦЕЛЬ: ДОЖДАТЬСЯ РЕАКЦИЙ %d/%d   /   ЖИЗНИ %d"%[done,game.targets.size(),game.lives]
  var items=[]
- for i in range(4):
+ for i in range(game.NAMES.size()):
   if game.inventory[i]>0:items.append("%s×%d"%[game.NAMES[i],game.inventory[i]])
  bag.text="РЮКЗАК: "+(", ".join(items) if not items.is_empty() else "пусто")+"   •   РЕАКЦИИ %d/%d"%[done,game.targets.size()]
  action.visible=game.escape_ready and game.state=="playing"
@@ -62,7 +62,7 @@ func refresh():
  elif game.combo>1:tip.text="СЕРИЯ ПАКОСТЕЙ ×%d!"%game.combo
  elif game.escape_ready:tip.text="Нажми «К ВЫХОДУ»"
  elif game.elapsed<12:tip.text="Коснись пола или предмета — герой сам подойдёт"
- else:tip.text="ЗЛОСТЬ СОСЕДА: %d%%   •   СЕРИЯ: %d"%[int(game.anger*100),game.best_combo]
+ else:tip.text="ЗАДАНИЕ: "+String(game.CASES[game.index].goal)
  queue_redraw()
 func _draw():
  if not is_instance_valid(game):return
@@ -88,6 +88,7 @@ func show_result(won:bool):
  result=make_panel();var box=VBoxContainer.new();box.add_theme_constant_override("separation",15);result.add_child(box)
  var title=Label.new();title.text="ПАКОСТЬ УДАЛАСЬ!" if won else "ПОПРОБУЙ ЕЩЁ РАЗ";title.add_theme_font_size_override("font_size",27);box.add_child(title)
  var details=Label.new();details.text="%d с   /   Попался: %d   /   Серия: %d"%[int(game.elapsed),game.caught,game.best_combo];details.add_theme_font_size_override("font_size",22);box.add_child(details)
+ var bonus_label=Label.new();bonus_label.text="БОНУС: "+("ПОЛУЧЕН" if game.bonus_awarded else "не получен")+" — "+String(game.CASES[game.index].bonus);bonus_label.add_theme_font_size_override("font_size",17);box.add_child(bonus_label)
  panel_button(box,"ДАЛЬШЕ" if won and game.index<game.CASES.size()-1 else "ПОВТОРИТЬ",func():game.start_case(mini(game.index+1,game.CASES.size()-1) if won and game.index<game.CASES.size()-1 else game.index))
  panel_button(box,"В МЕНЮ",func():game.menu_requested.emit())
 func _input(event):
