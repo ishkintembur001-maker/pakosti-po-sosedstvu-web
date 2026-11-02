@@ -19,11 +19,14 @@ static func master_available() -> bool:
   if not ResourceLoader.exists(resource_path):return false
  return true
 
-static func available() -> bool:
+static func mobile_available() -> bool:
  for resource_path in PATHS:
-  if not ResourceLoader.exists(resource_path):
-   return false
+  if not ResourceLoader.exists(resource_path):return false
  return true
+
+static func available() -> bool:
+ # Characters plus either exact source geometry or the derived owner mobile LOD.
+ return master_available() or mobile_available()
 
 static func _create_model(resource_path:String) -> Node3D:
  var resource=ResourceLoader.load(resource_path)
@@ -45,7 +48,7 @@ static func try_install(game) -> bool:
  if not available():
   push_error("ORIGINAL_OWNER_MODELS_MISSING: all five original GLB models are required")
   return false
- var full_geometry=not OS.has_feature("mobile") and master_available()
+ var full_geometry=master_available() and (not OS.has_feature("mobile") or not mobile_available())
  var selected_paths=MASTER_PATHS if full_geometry else PATHS
  var loaded=[]
  for resource_path in selected_paths:
