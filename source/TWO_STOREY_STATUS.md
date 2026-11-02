@@ -6,7 +6,7 @@ A six-room two-storey house with an 18-step staircase, 24 playable mission-speci
 
 ## Mobile interface
 
-Responsive landscape menu/HUD, large touch targets and left stick, tap-to-collect, pause that freezes AI and timers, focus-loss pause, portrait rotation gate, saved Music/SFX controls and a graphics setting. Web uses 75% render resolution without dynamic shadows by default. Browser fullscreen is best effort; physical iPhone/Safari performance remains unverified.
+Responsive landscape menu/HUD, large touch targets and left stick, tap-to-collect, pause that freezes AI and timers, focus-loss pause, portrait rotation gate, saved Music/SFX controls and a graphics setting. Web-сборка удалена по запросу владельца. Производительность нативной iOS/Android-версии на реальных устройствах ещё не проверена.
 
 ## Characters
 
@@ -26,9 +26,9 @@ Use Blender 4.3.2 and Godot 4.4.1. Run python3 source/art/make_textures.py, then
 
 ## Validation and remaining work
 
-Native Godot checks cover house completion, stair traversal, independent touch fingers, responsive layout/pause, body clips and facial morph weights. Environment tests also check AO and normal-map bindings, atlas size, UV2, rug grounding and contact-shadow visibility. Native close-up screenshots include neutral, smile, frown and blink poses. CI rebuilds both Blender masters, runs the tests, captures real engine frames and exports a Web preview as downloadable artifacts.
+Native Godot checks cover house completion, stair traversal, independent touch fingers, responsive layout/pause, body clips and facial morph weights. Environment tests also check AO and normal-map bindings, atlas size, UV2, rug grounding and contact-shadow visibility. Native close-up screenshots include neutral, smile, frown and blink poses. CI перестраивает Blender-ассеты, запускает тесты, захватывает кадры настоящего движка и отдельно проверяет экспорт нативного Android APK; Web-экспорт и Pages отключены.
 
-The supplied cinematic reference is still NOT met: clothing folds and cloth textures, hands, full acting animations, environment light/detail and the larger twelve-room concept house remain unfinished. The cinematic menu background is concept art, not an engine render. Pages publication remains blocked by visual review; passing automated tests alone is not visual acceptance.
+The supplied cinematic reference is still NOT met: clothing folds and cloth textures, hands, full acting animations, environment light/detail and the larger twelve-room concept house remain unfinished. The cinematic menu background is concept art, not an engine render. GitHub Pages и все сохранённые Web-артефакты удалены по запросу владельца; прохождение автоматических тестов само по себе не означает визуальную приёмку игры.
 
 ## Audit notes (24-mission verification)
 
