@@ -95,7 +95,7 @@ func run():
  g.tick_enemy(1.0/60)
  check(g.enemy_climbing>0,"Neighbor did not start descending the staircase")
  g.tick_enemy(1.0)
- check(g.neighbor_stair_world.y>0.2 and g.neighbor_stair_world.y<g.H+.2,"Neighbor must move physically between floors")
+ check(g.enemy_stair_world.y>0.2 and g.enemy_stair_world.y<g.H+.2,"Neighbor must move physically between floors")
  for step in range(140):g.tick_enemy(1.0/60)
  check(g.enemy_climbing==0 and g.neighbor_floor==0,"Neighbor must finish stair descent")
  g.start_case(0)
