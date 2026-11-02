@@ -25,7 +25,10 @@ func run():
  var shell=root.get_node_or_null("MobileShell")
  if shell:
   root.size=Vector2i(960,2078);await process_frame;shell._process(0)
-  check(shell.overlay.visible and g.process_mode==Node.PROCESS_MODE_DISABLED,"Portrait did not gate gameplay")
+  if OS.has_feature("mobile"):
+   check(shell.overlay.visible and g.process_mode==Node.PROCESS_MODE_DISABLED,"Portrait did not gate gameplay on mobile")
+  else:
+   check(not shell.overlay.visible and g.process_mode!=Node.PROCESS_MODE_DISABLED,"Desktop must not show phone rotation gate")
   root.size=Vector2i(1169,540);await process_frame;shell._process(0)
   check(not shell.overlay.visible and g.process_mode!=Node.PROCESS_MODE_DISABLED,"Rotation did not restore game")
  menu.return_menu();menu.queue_free();await process_frame;await create_timer(.2).timeout
