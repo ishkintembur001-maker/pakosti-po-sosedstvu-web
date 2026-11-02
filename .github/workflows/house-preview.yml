@@ -26,7 +26,7 @@ jobs:
           curl -fLsS --retry 3 https://github.com/godotengine/godot-builds/releases/download/4.4.1-stable/Godot_v4.4.1-stable_export_templates.tpz -o tools/templates.tpz
           mkdir -p ~/.local/share/godot/export_templates/4.4.1.stable
           unzip -oj tools/templates.tpz templates/android_debug.apk -d ~/.local/share/godot/export_templates/4.4.1.stable
-          unzip -oj tools/templates.tpz templates/web_debug.zip templates/web_release.zip -d ~/.local/share/godot/export_templates/4.4.1.stable
+          unzip -oj tools/templates.tpz templates/web_debug.zip templates/web_release.zip templates/web_nothreads_debug.zip templates/web_nothreads_release.zip -d ~/.local/share/godot/export_templates/4.4.1.stable
       - name: Build original and new Blender assets
         run: |
           python3 source/art/make_textures.py
