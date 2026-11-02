@@ -491,13 +491,23 @@ func tick_enemy(dt:float):
  var stair_entry=Vector2(6.7,1.8) if neighbor_floor==0 else Vector2(5.0,-2.15)
  var investigate=noise_timer>0 and noise_floor==neighbor_floor and not can_see
  var chasing=alert>.85 and floor_id==neighbor_floor and (can_see or pursuit_memory>0)
- var dest:Vector2=stair_entry if pursue_stairs else (player_pos if can_see and chasing else (last_seen_pos if chasing else (noise_pos if investigate else route[waypoint])))
+ var routine_goal:Vector2=route[waypoint]
+ var routine_has_armed=false
+ var routine_distance=1e9
+ for candidate in targets:
+  if candidate.armed and not candidate.used and int(candidate.floor)==neighbor_floor:
+   var candidate_distance=neighbor_pos.distance_squared_to(candidate.pos)
+   if candidate_distance<routine_distance:
+    routine_goal=candidate.pos
+    routine_distance=candidate_distance
+    routine_has_armed=true
+ var dest:Vector2=stair_entry if pursue_stairs else (player_pos if can_see and chasing else (last_seen_pos if chasing else (noise_pos if investigate else routine_goal)))
  if investigate and neighbor_pos.distance_to(noise_pos)<.55:noise_timer=0;investigate=false
  if neighbor_pos.distance_to(dest)<.50 and pursue_stairs:
   begin_neighbor_stairs();return
  # AStarGrid2D snaps the destination to 20-cm cells; the old 15-cm
  # threshold can leave the enemy permanently waiting at the final cell.
- if neighbor_pos.distance_to(dest)<.28 and not chasing and not pursue_stairs and not investigate:
+ if neighbor_pos.distance_to(dest)<.28 and not chasing and not pursue_stairs and not investigate and not routine_has_armed:
   waypoint=(waypoint+1)%route.size();dest=route[waypoint];enemy_path.clear()
  if enemy_path.is_empty() or enemy_repath_time<=0 or enemy_path_goal.distance_to(dest)>.35:
   enemy_path=path(neighbor_pos,dest,neighbor_floor)
