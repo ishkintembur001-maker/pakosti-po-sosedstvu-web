@@ -472,7 +472,7 @@ func tick_enemy(dt:float):
  if neighbor_pos.distance_to(dest)<.50 and pursue_stairs:
   begin_neighbor_stairs();return
  if neighbor_pos.distance_to(dest)<.15 and alert<=.85 and not pursue_stairs:
-  waypoint=(waypoint+1)%route.size();dest=route[waypoint]
+  waypoint=(waypoint+1)%route.size();dest=route[waypoint];enemy_path.clear()
  if enemy_path.is_empty() or (alert>.85 and int(elapsed*4)%3==0):
   enemy_path=path(neighbor_pos,dest,neighbor_floor)
  while not enemy_path.is_empty() and neighbor_pos.distance_to(enemy_path[0])<.055:enemy_path.remove_at(0)
