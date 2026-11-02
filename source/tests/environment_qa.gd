@@ -6,6 +6,7 @@ func _initialize():call_deferred("run")
 func run():
  var g=load("res://scenes/house.tscn").instantiate();root.add_child(g);await process_frame;g.set_process(false)
  check(not g.floor_data.is_empty(),"Baked floor heights missing")
+ for material in g.slice_materials:check(float(material.get_shader_parameter("cutoff"))>90,"Upper floor must remain visible")
  check(g.floor_height(Vector2(5.5,1.1),0)>.18 and g.floor_height(Vector2(5.5,1.1),0)<.23,"Wood floor height incorrect")
  check(g.floor_height(Vector2(-5,1.1),0)>.29,"Rug must be above wood floor")
  var mapped=0;var normals=0

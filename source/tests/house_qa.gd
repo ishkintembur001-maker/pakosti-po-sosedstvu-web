@@ -22,6 +22,7 @@ func run():
   check(g.targets.size()>=4 and g.targets.size()<=8,"Expected 4–8 pranks per mission")
   check(g.targets.size()==g.supplies.size(),"Each prank needs a corresponding item")
   check(g.CASES[level].tasks.size()==g.targets.size(),"Mission blueprint and active targets mismatch")
+  check(g.bonus_description().length()>0,"Bonus rule lacks a truthful description")
   check(String(g.CASES[level].id)=="m%02d"%(level+1),"Mission id invalid")
   var unique_slots={}
   for trap in g.targets:
@@ -33,6 +34,7 @@ func run():
    check(not g.path(g.player_pos,supply.pos,0).is_empty(),"Supply unreachable in case %d"%level)
   for trap in g.targets:g.finish_prank(trap)
   check(g.escape_ready and g.anger_events==g.targets.size(),"Mission cannot complete its own tasks")
+  check(g.particles.size()<=112,"Unbounded temporary effects")
   check(g.targets.all(func(trap):return trap.used),"Mission reaction count mismatch")
  for mission in range(8):
   g.start_case(mission)
@@ -79,6 +81,9 @@ func run():
  check(neighbor_anim!=null and neighbor_anim.current_animation=="catch","Only the neighbor must perform capture")
  for frame in range(120):g.tick_capture(1.0/60)
  check(g.capture_time==0 and g.player_pos==g.EXIT_POS,"Hero must respawn after capture")
+ g.start_case(0);check(g.particles.is_empty(),"Temporary prank effects leaked between levels")
+ g.caught=0;check(g.qualifies_bonus(),"No-capture bonus should count")
+ g.caught=1;check(not g.qualifies_bonus(),"No-capture bonus should fail after capture")
  g.floor_id=1;g.player_pos=Vector2(5,-2.15);g.act();for f in range(190):g._process(1.0/60)
  check(g.floor_id==0 and not g.blocked(g.player_pos,0),"Stair descent failed")
  menu.return_menu();check(menu.panel.visible and menu.active_game==null,"Return to menu failed")

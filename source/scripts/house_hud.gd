@@ -88,7 +88,7 @@ func show_result(won:bool):
  result=make_panel();var box=VBoxContainer.new();box.add_theme_constant_override("separation",15);result.add_child(box)
  var title=Label.new();title.text="ПАКОСТЬ УДАЛАСЬ!" if won else "ПОПРОБУЙ ЕЩЁ РАЗ";title.add_theme_font_size_override("font_size",27);box.add_child(title)
  var details=Label.new();details.text="%d с   /   Попался: %d   /   Серия: %d"%[int(game.elapsed),game.caught,game.best_combo];details.add_theme_font_size_override("font_size",22);box.add_child(details)
- var bonus_label=Label.new();bonus_label.text="БОНУС: "+("ПОЛУЧЕН" if game.bonus_awarded else "не получен")+" — "+String(game.CASES[game.index].bonus);bonus_label.add_theme_font_size_override("font_size",17);box.add_child(bonus_label)
+ var bonus_label=Label.new();bonus_label.text="БОНУС: "+("ПОЛУЧЕН" if game.bonus_awarded else "не получен")+" — "+game.bonus_description();bonus_label.add_theme_font_size_override("font_size",17);box.add_child(bonus_label)
  panel_button(box,"ДАЛЬШЕ" if won and game.index<game.CASES.size()-1 else "ПОВТОРИТЬ",func():game.start_case(mini(game.index+1,game.CASES.size()-1) if won and game.index<game.CASES.size()-1 else game.index))
  panel_button(box,"В МЕНЮ",func():game.menu_requested.emit())
 func _input(event):

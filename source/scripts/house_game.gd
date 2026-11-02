@@ -125,7 +125,7 @@ func _ready():
  for light in actor_source.find_children("*","Light3D",true,false):light.visible=false
  make_slices(environment_root)
  for f in range(2):navs.append(build_nav(f))
- camera=Camera3D.new();camera.projection=Camera3D.PROJECTION_ORTHOGONAL;camera.size=7.9;add_child(camera);camera.current=true
+ camera=Camera3D.new();camera.projection=Camera3D.PROJECTION_ORTHOGONAL;camera.size=10.2;add_child(camera);camera.current=true
  shadow=DirectionalLight3D.new();shadow.rotation_degrees=Vector3(-55,-25,0);shadow.light_color=Color("fff4e5");shadow.light_energy=.22;shadow.shadow_enabled=true;shadow.directional_shadow_max_distance=32;add_child(shadow)
  var env=WorldEnvironment.new();var e=Environment.new();e.background_mode=Environment.BG_COLOR;e.background_color=Color("202a2e");e.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR;e.ambient_light_color=Color("d1e0e4");e.ambient_light_energy=.38;e.tonemap_mode=Environment.TONE_MAPPER_FILMIC;env.environment=e;add_child(env)
  # Two unshadowed local practical lights add depth to faces and the furnished rooms.
@@ -179,7 +179,8 @@ func make_slices(node:Node):
  for c in node.get_children():make_slices(c)
 
 func set_slice():
- for m in slice_materials:m.set_shader_parameter("cutoff",3.24 if floor_id==0 and climbing<=0 else 99.0)
+ # Dollhouse view: show BOTH existing floors at all times.
+ for m in slice_materials:m.set_shader_parameter("cutoff",99.0)
 
 func obstacles(f:int)->Array:
  # Furniture footprints match the authored house; corridor z=1.1 passes both doors.
@@ -216,6 +217,9 @@ func path(a:Vector2,b:Vector2,f:int)->PackedVector2Array:return navs[f].get_poin
 func start_case(n:int):
  if is_instance_valid(hud) and is_instance_valid(hud.result):hud.result.queue_free();hud.result=null
  paused=false;pending_target=Vector2.INF;pending_action="";escape_ready=false;escape_route=false;index=clampi(n,0,CASES.size()-1);floor_id=0;neighbor_floor=int(CASES[index].floor);player_pos=Vector2(4.2,1.1);neighbor_pos=Vector2(-4.1,1.1)
+ for particle in particles:
+  if is_instance_valid(particle.node):particle.node.queue_free()
+ particles.clear()
  for t in targets:t.node.queue_free()
  for t in supplies:t.node.queue_free()
  targets.clear();supplies.clear();if is_instance_valid(exit_marker):exit_marker.queue_free()
@@ -232,7 +236,7 @@ func start_case(n:int):
   var supply=make_marker(supply_pos,0,kind,true,NAMES[kind])
   supplies.append({"kind":kind,"pos":supply_pos,"floor":0,"taken":false,"node":supply})
  exit_marker=make_exit_marker();exit_marker.hide()
- set_slice();hud.refresh()
+ set_slice();update_prank_labels();hud.refresh()
 func make_marker(p:Vector2,f:int,kind:int,supply:bool,custom_title:String="")->Node3D:
  var n=Node3D.new();n.position=Vector3(p.x,floor_height(p,f)+.04,p.y);add_child(n)
  var mesh=MeshInstance3D.new();var ring=TorusMesh.new();ring.inner_radius=.28;ring.outer_radius=.32;ring.rings=20;ring.ring_segments=8;mesh.mesh=ring
@@ -241,6 +245,14 @@ func make_marker(p:Vector2,f:int,kind:int,supply:bool,custom_title:String="")->N
  if supply:
   var icon=MeshInstance3D.new();var sphere=SphereMesh.new();sphere.radius=.12;sphere.height=.24;icon.mesh=sphere;icon.material_override=m;icon.position.y=.2;n.add_child(icon)
  return n
+func update_prank_labels():
+ for item in targets+supplies:
+  if not is_instance_valid(item.node):continue
+  var still_active=not bool(item.get("used",false)) and not bool(item.get("taken",false))
+  if item.has("armed") and item.armed:still_active=false
+  item.node.visible=still_active and item.floor==floor_id
+  for child in item.node.get_children():
+   if child is Label3D:child.visible=item.node.visible and player_pos.distance_to(item.pos)<2.6
 func make_exit_marker()->Node3D:
  var n=Node3D.new();n.name="SafeExit";n.position=Vector3(EXIT_POS.x,floor_height(EXIT_POS,0)+.05,EXIT_POS.y);add_child(n)
  var mesh=MeshInstance3D.new();var ring=TorusMesh.new();ring.inner_radius=.37;ring.outer_radius=.45;mesh.mesh=ring
@@ -265,6 +277,12 @@ func guide_to_exit():
  escape_route=true
  if floor_id==1:walk_to(Vector2(5.0,-2.15),"stairs")
  else:walk_to(EXIT_POS,"exit")
+func bonus_description()->String:
+ var rule=String(CASES[index].bonus_rule)
+ if rule=="clean":return "Без поимок"
+ if rule=="fast":return "Успеть за %d секунд"%int(CASES[index].par)
+ if rule.begins_with("combo"):return "Серия из %s реакций"%rule.trim_prefix("combo")
+ return "Завершить миссию"
 func qualifies_bonus()->bool:
  var rule=String(CASES[index].bonus_rule)
  if rule=="clean":return caught==0
@@ -390,7 +408,7 @@ func _process(dt:float):
  hero.visible=not hidden;neighbor.visible=neighbor_floor==floor_id or climbing>0
  update_contact(hero_contact,hero,player_pos,floor_id,not hidden and climbing<=0)
  update_contact(neighbor_contact,neighbor,neighbor_pos,neighbor_floor,neighbor.visible)
- var focus=hero.position+Vector3(0,.8,0);var target=Vector3(clampf(focus.x,-3,3),focus.y,0)
+ var focus=hero.position+Vector3(0,.8,0);var target=Vector3(clampf(focus.x,-3,3),H*.65,0)
  camera.position=target+Vector3(1.2,7.5,17);camera.look_at(target)
  for i in range(particles.size()-1,-1,-1):
   var p=particles[i];p.life-=dt;p.node.position+=p.velocity*dt;p.velocity.y-=dt*4
@@ -399,7 +417,7 @@ func _process(dt:float):
  if fps_time>4 and quality:
   if fps_frames/fps_time<25:set_quality(false)
   fps_time=0;fps_frames=0
- hud.refresh()
+ update_prank_labels();hud.refresh()
 func move_player(dt:float):
  var input=Input.get_vector("ui_left","ui_right","ui_up","ui_down")+stick
  if Input.is_key_pressed(KEY_A):input.x-=1

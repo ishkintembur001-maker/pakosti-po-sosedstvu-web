@@ -29,3 +29,7 @@ Use Blender 4.3.2 and Godot 4.4.1. Run python3 source/art/make_textures.py, then
 Native Godot checks cover house completion, stair traversal, independent touch fingers, responsive layout/pause, body clips and facial morph weights. Environment tests also check AO and normal-map bindings, atlas size, UV2, rug grounding and contact-shadow visibility. Native close-up screenshots include neutral, smile, frown and blink poses. CI rebuilds both Blender masters, runs the tests, captures real engine frames and exports a Web preview as downloadable artifacts.
 
 The supplied cinematic reference is still NOT met: clothing folds and cloth textures, hands, full acting animations, environment light/detail and the larger twelve-room concept house remain unfinished. The cinematic menu background is concept art, not an engine render. Pages publication remains blocked by visual review; passing automated tests alone is not visual acceptance.
+
+## Audit notes (24-mission verification)
+
+The camera and cutaway shader now show both existing floors simultaneously. Item labels appear only near the hero to avoid overcrowding. Temporary prank effects are cleared on restart. The bonus shown to players derives from implemented, testable conditions (no capture, par time or combo); original storyboard bonuses that need unavailable props or AI are not advertised as working.
