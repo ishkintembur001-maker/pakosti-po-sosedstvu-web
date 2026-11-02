@@ -31,4 +31,19 @@ func run():
    if limb==null:push_error("Old shoulder pivot missing");fail+=1;continue
    p.play("walk");p.seek(0,true);var before=limb.quaternion;p.advance(.25)
    if before.is_equal_approx(limb.quaternion):push_error("Animation did not move shoulder");fail+=1
+   # The stock cast must have working elbow/wrist actions, not rigid hands.
+   var elbow=actor.find_child("Elbow_L*",true,false) as Node3D
+   var wrist=actor.find_child("Wrist_L*",true,false) as Node3D
+   if elbow==null or wrist==null:
+    push_error("Missing independent elbow/wrist in "+actor.name);fail+=1;continue
+   p.play("pickup");p.seek(0.0,true)
+   var bend_before=elbow.rotation.x
+   p.seek(p.get_animation("pickup").length*.5,true)
+   if absf(elbow.rotation.x-bend_before)<.20:
+    push_error("Picking up an item did not bend the elbow");fail+=1
+   p.play("walk");p.seek(0.0,true)
+   var wrist_before=wrist.rotation.z
+   p.seek(p.get_animation("walk").length*.25,true)
+   if absf(wrist.rotation.z-wrist_before)<.025:
+    push_error("Walking did not animate the wrist");fail+=1
  g.queue_free();await process_frame;await process_frame;print("ANIMATION_QA failures=",fail);quit(fail)

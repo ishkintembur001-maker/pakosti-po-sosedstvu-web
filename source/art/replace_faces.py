@@ -139,7 +139,7 @@ for name in ['TricksterCharacter','NeighborCharacter']:
   if cotton:
    for limb in root.children:
     if not limb.name.startswith('Arm_'):continue
-    for o in limb.children:
+    for o in limb.children_recursive:
      if o.type!='MESH' or not o.data.materials or o.data.materials[0].name!='Warm peach skin':continue
      o.data.materials.append(cotton);slot=len(o.data.materials)-1
      for poly in o.data.polygons:

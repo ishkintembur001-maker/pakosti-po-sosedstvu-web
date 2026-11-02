@@ -94,18 +94,18 @@ def make_nails(actor,enemy):
         p.inputs["Base Color"].default_value=(.68,.48,.38,1)
         p.inputs["Roughness"].default_value=.47
     for side,sign in (("L",-1),("R",1)):
-        pivots=[o for o in actor.children if o.type=="EMPTY" and o.name.startswith("Arm_"+side)]
-        if len(pivots)!=1:raise RuntimeError("Expected one "+actor.name+" shoulder "+side)
+        pivots=[o for o in actor.children_recursive if o.type=="EMPTY" and o.name.startswith("Wrist_"+side)]
+        if len(pivots)!=1:raise RuntimeError("Expected one "+actor.name+" wrist "+side)
         verts=[];faces=[]
         for finger in range(4):
-            x0=sign*.10-.069+finger*.044
-            z0=-.583
+            x0=-.069+finger*.044
+            z0=-.113
             base=len(verts)
-            for scale,y in ((1,-.212),(.72,-.217)):
+            for scale,y in ((1,-.072),(.72,-.077)):
                 for j in range(12):
                     a=math.tau*j/12
                     verts.append((x0+.016*scale*math.cos(a),y,z0+.021*scale*math.sin(a)))
-            verts.append((x0,-.218,z0))
+            verts.append((x0,-.078,z0))
             for j in range(12):
                 k=(j+1)%12
                 faces.append((base+j,base+k,base+12+k,base+12+j))

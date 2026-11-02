@@ -1,3 +1,7 @@
 # Next visual pass: anatomical cheek volume and hands
 
 Runs on Blender 4.3.2 in source/art/sculpt_cast.py after tailored clothing and before static AO baking. This revises original face topology in place (including every facial morph target, preserving the Smile/Frown/Blink offsets), gives the already-existing hoodie and robe actual subdued fabric drape via subdivided mesh displacement, and adds one joint-parented surface for four fingernails per hand. No floating facial stickers or heavy real-time skin shaders. The meshes retain mobile-friendly original material links, UVs, hinge animation and gameplay. This is not a new fully rigged body or a complete reconstruction of the cinematic reference. Native Godot screenshots and real mobile FPS still require inspection.
+
+## Arm and hand articulation (native mobile build)
+
+`refine_cast.py` attaches actual forearm, palm and finger meshes to left/right elbow and wrist transform pivots while preserving their existing world positions. Every existing animation clip now keys those pivots: small secondary wrist motion in walk/run, deliberate elbow bend in pickup/plant, defensive arms for the hero and active catch arms for the neighbor. `tailor_cast.py` moves cuffs to the elbow, and `sculpt_cast.py` places nail meshes on the wrist. `animation_qa.gd` rejects rigid elbows or wrists. This is a two-segment articulated hierarchy, **not** yet a professional skinned hand/finger rig; visual inspection and physical-device FPS are still required. No browser builds are produced.

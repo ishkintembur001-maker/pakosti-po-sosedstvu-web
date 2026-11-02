@@ -115,6 +115,13 @@ def local_pivot(root, kind, side):
                            (root.name, kind, side, len(matches)))
     return matches[0]
 
+def local_elbow(shoulder,side):
+    matches=[obj for obj in shoulder.children
+             if obj.type=="EMPTY" and obj.name.startswith("Elbow_"+side)]
+    if len(matches)!=1:
+        raise RuntimeError("Missing fitted elbow "+side)
+    return matches[0]
+
 def detailed_hero(root):
     # Hoodie's chest and waist are elliptical lofts, front is negative Y.
     ring("Tailor_Hero_Hoodie_Waistband",(0,0),.305,.194,.628,.038,HOODIE,root,40,1.8)
@@ -134,8 +141,9 @@ def detailed_hero(root):
     # Cuffs and sleeve compression are parented to the exact shoulder hinges.
     for s in ("L","R"):
         arm=local_pivot(root,"Arm",s)
+        elbow=local_elbow(arm,s)
         sign=-1 if s=="L" else 1
-        ring("Tailor_Hero_Cuff_"+s,(sign*.108,-.128),.094,.096,-.431,.042,HOODIE,arm,32,1.2)
+        ring("Tailor_Hero_Cuff_"+s,(sign*.008,-.058),.094,.096,-.141,.042,HOODIE,elbow,32,1.2)
         for n in range(3):
             z=-.16-n*.072
             ribbon("Tailor_Hero_SleeveDart_%s_%d"%(s,n),
@@ -164,8 +172,10 @@ def detailed_neighbor(root):
             [(sign*.392,-.198,.665),(sign*.364,-.285,.564),
              (sign*.329,-.305,.470),(sign*.309,-.276,.402)],
             [.007,.039,.027,.003],ROBE,root,.025)
-        arm=local_pivot(root,"Arm","L" if sign==-1 else "R")
-        ring("Tailor_Neighbor_RobeSleeveCuff_%d"%idx,(sign*.102,-.068),.131,.134,-.315,.055,ROBE,arm,32,1.0)
+        side="L" if sign==-1 else "R"
+        arm=local_pivot(root,"Arm",side)
+        elbow=local_elbow(arm,side)
+        ring("Tailor_Neighbor_RobeSleeveCuff_%d"%idx,(sign*.002,.002),.131,.134,-.025,.055,ROBE,elbow,32,1.0)
         ribbon("Tailor_Neighbor_RobeSleeveFold_%d"%idx,
             [(sign*.036,-.169,-.113),(sign*.104,-.185,-.188),(sign*.160,-.148,-.261)],
             [.007,.035,.007],ROBE,arm,.021)

@@ -36,8 +36,37 @@ for name in ['TricksterCharacter','NeighborCharacter']:
     if z-.13<v.co.z<z+.2 and v.co.y<-.20:
      center=Vector(((-1 if v.co.x<0 else 1)*(.154 if enemy else .132),-.265,z+.06))
      d=v.co-center;v.co=center+Vector((d.x*.88,d.y*.9,d.z*.88))
- # Named clips are real glTF animations targeting articulated shoulder/hip pivots.
- limbs=[c for c in root.children if c.type=='EMPTY' and c.name.startswith(('Arm_','Legs_'))]
+ # Each forearm and hand gets its own animated pivot rather than rotating
+ # the entire arm as one rigid part. Preserve the imported surface transforms:
+ # its origin is still the same in the finished Godot scene.
+ for side,sign in (('L',-1),('R',1)):
+  arms=[o for o in root.children if o.type=='EMPTY' and o.name.startswith('Arm_'+side)]
+  if len(arms)!=1:raise RuntimeError('Missing shoulder '+name+'/'+side)
+  arm=arms[0]
+  elbow=bpy.data.objects.new('Elbow_'+side,None)
+  bpy.context.collection.objects.link(elbow)
+  elbow.parent=arm
+  elbow.location=(sign*.10,-.07,-.29)
+  wrist=bpy.data.objects.new('Wrist_'+side,None)
+  bpy.context.collection.objects.link(wrist)
+  wrist.parent=elbow
+  wrist.location=(0,-.07,-.18)
+  bpy.context.view_layer.update()
+  moved=0
+  for piece in list(arm.children):
+   if piece.type!='MESH':continue
+   label=piece.name.lower()
+   target=wrist if any(part in label for part in ('hand','finger','thumb')) else (elbow if label.startswith('forearm') else None)
+   if target is None:continue
+   original_world=piece.matrix_world.copy()
+   piece.parent=target
+   piece.matrix_world=original_world
+   moved+=1
+  if moved<4:raise RuntimeError('Cannot find detachable forearm and fingers: '+name+'/'+side)
+  bpy.context.view_layer.update()
+  print('ARTICULATED_FOREARM_OK',name,side,moved,flush=True)
+ # Named clips now include shoulder, elbow, wrist and hip pivots.
+ limbs=[c for c in root.children_recursive if c.type=='EMPTY' and c.name.startswith(('Arm_','Legs_','Elbow_','Wrist_'))]
  for limb in limbs:limb.animation_data_clear();limb.rotation_mode='XYZ';limb.rotation_euler=(0,0,0)
  clips=[('idle',60,0),('walk',30,.34),('sneak',48,.22),('run',22,.55),('pickup',36,0),('plant_trap',48,0),('react_slip',60,0),('react_surprise',60,0),('celebrate',60,0),('catch',48,0),('caught_react',48,0)]
  for clip,frames,amplitude in clips:
@@ -46,7 +75,8 @@ for name in ['TricksterCharacter','NeighborCharacter']:
   if clip=='caught_react' and enemy:continue
   for limb in limbs:
    action=bpy.data.actions.new(name+'_'+limb.name+'_'+clip);limb.animation_data_create();limb.animation_data.action=action
-   leg=limb.name.startswith('Legs');sign=1 if limb.name.startswith(('Legs_L','Arm_R')) else -1
+   leg=limb.name.startswith('Legs');elbow=limb.name.startswith('Elbow_');wrist=limb.name.startswith('Wrist_')
+   sign=1 if limb.name.startswith(('Legs_L','Arm_R','Elbow_R','Wrist_R')) else -1
    for frame in range(1,frames+2,3):
     t=(frame-1)/frames;wave=math.sin(t*2*math.pi);x=amplitude*wave*sign
     y=0;roll=0
@@ -60,6 +90,21 @@ for name in ['TricksterCharacter','NeighborCharacter']:
     if clip=='caught_react':
      if leg:x=.09*math.sin(t*math.pi)*sign
      else:x=-.22*math.sin(t*math.pi);roll=sign*.08*math.sin(t*math.pi)
+    # An elbow bends independently; wrist follows through with the hand.
+    # Negative X flexion projects the forearm forward, not through the torso.
+    if elbow:
+     phase=math.sin(t*math.pi)
+     flex={'idle':-.12,'walk':-.24,'sneak':-.43,'run':-.62,
+           'pickup':-.30,'plant_trap':-.35,'react_slip':-.29,
+           'react_surprise':-.28,'celebrate':-.85,'catch':-.30,
+           'caught_react':-.24}[clip]
+     x=flex+(-.13 if clip in ('walk','sneak') else -.23 if clip=='run' else .035)*wave
+     if clip in ('pickup','plant_trap','react_slip','react_surprise','catch','caught_react'):
+      x-= (1.20 if clip in ('catch','caught_react') else .96)*phase
+     roll=sign*.07*wave
+    if wrist:
+     x=-.035 if clip in ('idle','walk') else (-.10 if clip in ('sneak','run') else -.08*math.sin(t*math.pi))
+     roll=sign*(.09*wave if clip in ('walk','sneak','run') else .12*math.sin(t*math.pi))
     limb.rotation_euler=(x,y,roll);limb.keyframe_insert(data_path='rotation_euler',frame=frame)
    track=limb.animation_data.nla_tracks.new();track.name=clip;strip=track.strips.new(clip,1,action);strip.name=clip
    limb.animation_data.action=None;limb.rotation_euler=(0,0,0)
