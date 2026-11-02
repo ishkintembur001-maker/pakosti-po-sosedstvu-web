@@ -59,6 +59,11 @@ func run():
  check(not g.hud.action.visible,"Exit button shown before all traps complete")
  g.start_case(0);g.safe_time=0;g.begin_capture()
  check(g.capture_time>0 and g.lives==2,"Capture must cost a life and start scene")
+ g.tick_capture(.04)
+ var hero_anim=g.hero.get_meta("animation_player") as AnimationPlayer
+ var neighbor_anim=g.neighbor.get_meta("animation_player") as AnimationPlayer
+ check(hero_anim!=null and hero_anim.current_animation=="caught_react","Hero must ONLY react defensively to neighbor capture")
+ check(neighbor_anim!=null and neighbor_anim.current_animation=="catch","Only the neighbor must perform capture")
  for frame in range(120):g.tick_capture(1.0/60)
  check(g.capture_time==0 and g.player_pos==g.EXIT_POS,"Hero must respawn after capture")
  g.floor_id=1;g.player_pos=Vector2(5,-2.15);g.act();for f in range(190):g._process(1.0/60)

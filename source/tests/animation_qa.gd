@@ -10,6 +10,10 @@ func run():
   for clip in ["idle","walk","sneak","run","pickup","plant_trap","react_slip","react_surprise","celebrate"]:
    if not p.has_animation(clip):push_error("Missing clip "+clip);fail+=1;continue
    p.play(clip);p.advance(.17)
+  var special="caught_react" if actor==g.hero else "catch"
+  var forbidden="catch" if actor==g.hero else "caught_react"
+  if not p.has_animation(special):push_error("Missing role-specific clip "+special);fail+=1
+  if p.has_animation(forbidden):push_error("Forbidden capture clip on actor "+forbidden);fail+=1
   var limb=actor.find_child("Arm_L*",true,false);p.play("walk");p.seek(0,true);var a=limb.quaternion;p.advance(.25)
   if a.is_equal_approx(limb.quaternion):push_error("Animation did not move shoulder");fail+=1
  g.queue_free();await process_frame;await process_frame;print("ANIMATION_QA failures=",fail);quit(fail)

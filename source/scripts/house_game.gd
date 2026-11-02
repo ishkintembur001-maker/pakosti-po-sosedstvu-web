@@ -325,11 +325,12 @@ func begin_capture():
 func tick_capture(dt:float):
  capture_time=maxf(0,capture_time-dt)
  var phase=1.8-capture_time
- animate(hero,0,3);animate(neighbor,0,4)
- hero.rotation.z=sin(phase*15.0)*.16
- neighbor.rotation.z=sin(phase*13.0)*.09
+ animate(hero,0,101);animate(neighbor,0,102)
+ # Keep whole-body tilt neutral; the skeleton handles recoil and restraint.
+ hero.rotation.z=0
+ neighbor.rotation.z=0
  var arm=neighbor.find_child("Arm_R*",true,false)
- if arm is Node3D:arm.rotation.z=sin(phase*17.0)*.55
+ if arm is Node3D and not neighbor.has_meta("animation_player"):arm.rotation.z=sin(phase*17.0)*.25
  if capture_time<=0:
   hero.rotation.z=0;neighbor.rotation.z=0
   player_pos=EXIT_POS;floor_id=0;safe_time=5.5;alert=0;enemy_path.clear();set_slice()
@@ -440,6 +441,8 @@ func animate(actor:Node3D,speed:float,pose:int):
   var player:AnimationPlayer=actor.get_meta("animation_player")
   var clip="walk" if speed>.1 else "idle"
   if pose==99:clip="celebrate"
+  elif pose==101:clip="caught_react" if actor==hero else "idle"
+  elif pose==102:clip="catch" if actor==neighbor else "idle"
   elif pose==-1:clip="plant_trap"
   elif pose in [1,3]:clip="react_slip"
   elif pose>0:clip="react_surprise"

@@ -39,19 +39,27 @@ for name in ['TricksterCharacter','NeighborCharacter']:
  # Named clips are real glTF animations targeting articulated shoulder/hip pivots.
  limbs=[c for c in root.children if c.type=='EMPTY' and c.name.startswith(('Arm_','Legs_'))]
  for limb in limbs:limb.animation_data_clear();limb.rotation_mode='XYZ';limb.rotation_euler=(0,0,0)
- clips=[('idle',60,0),('walk',30,.44),('sneak',48,.25),('run',22,.72),('pickup',36,0),('plant_trap',48,0),('react_slip',60,0),('react_surprise',60,0),('celebrate',60,0)]
+ clips=[('idle',60,0),('walk',30,.34),('sneak',48,.22),('run',22,.55),('pickup',36,0),('plant_trap',48,0),('react_slip',60,0),('react_surprise',60,0),('celebrate',60,0),('catch',48,0),('caught_react',48,0)]
  for clip,frames,amplitude in clips:
+  # Capture belongs only to the neighbor. The protagonist can merely recoil.
+  if clip=='catch' and not enemy:continue
+  if clip=='caught_react' and enemy:continue
   for limb in limbs:
    action=bpy.data.actions.new(name+'_'+limb.name+'_'+clip);limb.animation_data_create();limb.animation_data.action=action
    leg=limb.name.startswith('Legs');sign=1 if limb.name.startswith(('Legs_L','Arm_R')) else -1
    for frame in range(1,frames+2,3):
     t=(frame-1)/frames;wave=math.sin(t*2*math.pi);x=amplitude*wave*sign
     y=0;roll=0
+    if clip in ['walk','run','sneak'] and not leg:x*=.67
     if clip=='idle' and not leg:x=.025*wave
     if clip in ['pickup','plant_trap'] and not leg:x=-1.0*math.sin(t*math.pi)
     if clip=='react_slip':x=(-.6 if leg else -1.2)*math.sin(t*math.pi);roll=sign*.4*math.sin(t*math.pi)
     if clip=='react_surprise' and not leg:x=-1.4*math.sin(t*math.pi);roll=sign*.3*math.sin(t*math.pi)
     if clip=='celebrate' and not leg:roll=sign*(.9+.2*wave);x=-.4
+    if clip=='catch' and not leg:x=-.56*math.sin(t*math.pi);roll=sign*.12*math.sin(t*math.pi)
+    if clip=='caught_react':
+     if leg:x=.09*math.sin(t*math.pi)*sign
+     else:x=-.22*math.sin(t*math.pi);roll=sign*.08*math.sin(t*math.pi)
     limb.rotation_euler=(x,y,roll);limb.keyframe_insert(data_path='rotation_euler',frame=frame)
    track=limb.animation_data.nla_tracks.new();track.name=clip;strip=track.strips.new(clip,1,action);strip.name=clip
    limb.animation_data.action=None;limb.rotation_euler=(0,0,0)
@@ -70,4 +78,4 @@ for obj in bpy.data.objects:
   for track in obj.animation_data.nla_tracks:track.mute=False
   obj.animation_data.action=obj.animation_data.nla_tracks[0].strips[0].action
 bpy.ops.export_scene.gltf(filepath=os.path.join(ROOT,'assets/models/two_storey.glb'),export_format='GLB',export_animations=True,export_animation_mode='NLA_TRACKS',export_nla_strips=True,export_force_sampling=True,export_frame_range=False,export_cameras=False,export_lights=False)
-print('REFINED_CAST_WITH_NINE_CLIPS')
+print('REFINED_CAST_WITH_ROLE_SEPARATED_CAPTURE_CLIPS')
