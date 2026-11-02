@@ -541,6 +541,7 @@ func _process(dt:float):
  if combo_timer<=0:combo=0
  if capture_time>0:
   tick_capture(dt);hud.refresh();return
+ var neighbor_before=neighbor_pos
  if state=="playing":
   if climbing>0:
    climbing=maxf(0,climbing-dt);var t=1-climbing/3.1
@@ -557,7 +558,8 @@ func _process(dt:float):
   else:move_player(dt)
   tick_enemy(dt)
  neighbor.position=enemy_stair_world if enemy_climbing>0 else Vector3(neighbor_pos.x,floor_height(neighbor_pos,neighbor_floor)-.015,neighbor_pos.y)
- neighbor.rotation.y=atan2(face.x,face.y);animate(neighbor,0 if reaction>0 else 1,reaction_kind+1 if reaction>0 else 0)
+ var enemy_moved=enemy_climbing>0 or neighbor_pos.distance_to(neighbor_before)>.001
+ neighbor.rotation.y=atan2(face.x,face.y);animate(neighbor,0 if reaction>0 or not enemy_moved else 1,reaction_kind+1 if reaction>0 else 0)
  hero.visible=not hidden;neighbor.visible=neighbor_floor==floor_id or climbing>0 or enemy_climbing>0
  update_contact(hero_contact,hero,player_pos,floor_id,not hidden and climbing<=0)
  update_contact(neighbor_contact,neighbor,neighbor_pos,neighbor_floor,neighbor.visible and enemy_climbing<=0)
@@ -583,13 +585,15 @@ func move_player(dt:float):
  elif not player_path.is_empty():
   while not player_path.is_empty() and player_pos.distance_to(player_path[0])<.055:player_path.remove_at(0)
   if not player_path.is_empty():motion=(player_path[0]-player_pos).normalized()
+ var player_before=player_pos
  if not hidden and action_time<=0:
   var step=motion*SPEED*dt
   for axis in [Vector2(step.x,0),Vector2(0,step.y)]:
    if not blocked(player_pos+axis,floor_id):player_pos+=axis
  hero.position=Vector3(player_pos.x,floor_height(player_pos,floor_id)-.015*hero.scale.y,player_pos.y)
  if motion.length()>.1:hero.rotation.y=lerp_angle(hero.rotation.y,atan2(motion.x,motion.y),minf(1,dt*12))
- animate(hero,motion.length() if action_time<=0 else 0,-1 if action_time>0 else 0)
+ var actual_walk=player_pos.distance_to(player_before)>.001
+ animate(hero,1.0 if actual_walk and action_time<=0 else 0.0,-1 if action_time>0 else 0)
  if pending_target!=Vector2.INF and player_pos.distance_to(pending_target)<.8:complete_walk_action()
  if escape_ready and escape_route and floor_id==0 and player_pos.distance_to(EXIT_POS)<.8:finish_escape()
 func attach_animations(actor:Node3D,source_name:String):
@@ -624,7 +628,7 @@ func animate(actor:Node3D,speed:float,pose:int):
   elif pose in [1,3]:clip="react_slip"
   elif pose>0:clip="react_surprise"
   if player.has_animation(clip) and player.current_animation!=clip:player.play(clip,.16)
-  player.speed_scale=maxf(.65,speed) if clip=="walk" else 1.0
+  player.speed_scale=(2.1 if actor==hero else 1.0) if clip=="walk" else 1.0
  preload("res://scripts/cast_expressions.gd").apply(actor,elapsed,actor==neighbor,pose==99,anger if actor==neighbor else 0.0)
  actor.rotation.z=sin(elapsed*12)*.12 if pose in [1,3] else 0
 func set_quality(enabled:bool):
