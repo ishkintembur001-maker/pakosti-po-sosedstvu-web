@@ -1,0 +1,60 @@
+name: Prepare native iOS Xcode project
+on:
+  push:
+    branches: [development/two-storey-playable]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ios_project:
+    # Apple Team ID is mandatory for Godot iOS export; do not invent signing IDs.
+    if: ${{ vars.GODOT_IOS_TEAM_ID != '' }}
+    runs-on: macos-15
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Blender and Godot for native iOS
+        run: |
+          brew install blender
+          mkdir -p tools native-dist evidence
+          curl -fLsS --retry 3 https://github.com/godotengine/godot-builds/releases/download/4.4.1-stable/Godot_v4.4.1-stable_macos.universal.zip -o tools/godot-macos.zip
+          unzip -q tools/godot-macos.zip -d tools
+          GODOT_BIN="$(find tools -type f -path '*/Godot.app/Contents/MacOS/Godot' -print -quit)"
+          test -n "$GODOT_BIN"
+          echo "GODOT_BIN=$GODOT_BIN" >> "$GITHUB_ENV"
+          curl -fLsS --retry 3 https://github.com/godotengine/godot-builds/releases/download/4.4.1-stable/Godot_v4.4.1-stable_export_templates.tpz -o tools/templates.tpz
+          mkdir -p "$HOME/Library/Application Support/Godot/export_templates/4.4.1.stable"
+          unzip -oj tools/templates.tpz templates/ios.zip -d "$HOME/Library/Application Support/Godot/export_templates/4.4.1.stable"
+      - name: Build all existing Blender sources for iPhone
+        run: |
+          python3 -m pip install --break-system-packages pillow
+          python3 source/art/make_textures.py
+          BLENDER_BIN="$(command -v blender)"
+          "$BLENDER_BIN" -b --python-exit-code 1 --python source/art/build_assets.py > evidence/classic-blender.log 2>&1
+          "$BLENDER_BIN" -b --python-exit-code 1 --python source/art/refine_cast.py > evidence/house-blender.log 2>&1
+          "$BLENDER_BIN" -b --python-exit-code 1 --python source/art/replace_faces.py > evidence/face-blender.log 2>&1
+          "$BLENDER_BIN" -b --python-exit-code 1 --python source/art/tailor_cast.py > evidence/tailor-cast.log 2>&1
+          "$BLENDER_BIN" -b --python-exit-code 1 --python source/art/sculpt_cast.py > evidence/sculpt-cast.log 2>&1
+          "$BLENDER_BIN" -b --python-exit-code 1 --python source/art/polish_environments.py > evidence/environment-blender.log 2>&1
+          "$BLENDER_BIN" -b --python-exit-code 1 --python source/art/character_microdetail.py > evidence/character-microdetail.log 2>&1
+          python3 source/tests/character_pbr_check.py
+      - name: Prepare iOS Xcode export without signing
+        env:
+          GODOT_IOS_TEAM_ID: ${{ vars.GODOT_IOS_TEAM_ID }}
+        run: |
+          python3 ci/generate_ios_preset.py
+          "$GODOT_BIN" --headless --editor --path source --import --quit > evidence/ios-import.log 2>&1
+          "$GODOT_BIN" --headless --path source --export-debug iOS ../native-dist/Pakosti.ipa > evidence/ios-export.log 2>&1
+          test -d native-dist/Pakosti.xcodeproj
+          test -s native-dist/Pakosti.xcodeproj/project.pbxproj
+      - name: Upload Xcode project (not an installable IPA)
+        uses: actions/upload-artifact@v4
+        with:
+          name: pakosti-ios-xcode-project-unsigned
+          path: native-dist/
+      - name: Upload iOS build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pakosti-ios-project-logs
+          path: evidence/
