@@ -73,6 +73,10 @@ func run():
    if g.state!="playing":break
    g._process(1.0/60)
   check(g.state=="won","Failed to navigate to the safe exit in case %d"%mission)
+  var progress=ConfigFile.new()
+  check(progress.load("user://pakosti_release.cfg")==OK,"Saved progress file missing")
+  check(int(progress.get_value("house","unlocked",0))>=mini(mission+1,23),"Next mission was not unlocked")
+  check(int(progress.get_value("scores",str(mission),0))>=100,"Mission best score was not saved")
   print("HOUSE_CASE_OK ",mission+1," simulated_frames=",frames)
  # One touch chooses a goal and walks to collect it, without a joystick.
  if is_instance_valid(g.hud.result):g.hud.result.free();g.hud.result=null

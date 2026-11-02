@@ -70,11 +70,23 @@ func dialog(title:String)->VBoxContainer:
 func close_button(box:VBoxContainer):
  var b=Button.new();b.text="НАЗАД";b.custom_minimum_size.y=68;b.pressed.connect(dismiss);box.add_child(b)
 func open_cases():
- settings.load(SAVE);var unlocked=int(settings.get_value("house","unlocked",0));var box=dialog("КАМПАНИЯ — 24 МИССИИ")
+ settings.load(SAVE);var unlocked=int(settings.get_value("house","unlocked",0))
+ var mission_count=preload("res://scripts/house_game.gd").CASES.size()
+ var completed=0
+ for i in range(mission_count):
+  if int(settings.get_value("scores",str(i),0))>0:completed+=1
+ var box=dialog("КАМПАНИЯ — %d/%d ПРОЙДЕНО"%[completed,mission_count])
  var scroll=ScrollContainer.new();scroll.custom_minimum_size=Vector2(660,290);scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED;box.add_child(scroll)
  var grid=GridContainer.new();grid.columns=2;grid.add_theme_constant_override("h_separation",10);grid.add_theme_constant_override("v_separation",8);scroll.add_child(grid)
  for i in range(preload("res://scripts/house_game.gd").CASES.size()):
-  var b=Button.new();b.text="%02d  %s"%[i+1,preload("res://scripts/house_game.gd").CASES[i].title];b.disabled=i>unlocked;b.custom_minimum_size=Vector2(318,65);b.add_theme_font_size_override("font_size",18);b.clip_text=true;grid.add_child(b);var selected=i;b.pressed.connect(func():start_house(selected))
+  var b=Button.new()
+  var best=int(settings.get_value("scores",str(i),0))
+  b.text="%02d  %s%s"%[i+1,preload("res://scripts/house_game.gd").CASES[i].title,(" ✓" if best>0 else "")]
+  if best>0:b.text+="\nРЕКОРД: %d"%best
+  b.disabled=i>unlocked;b.custom_minimum_size=Vector2(318,65)
+  b.add_theme_font_size_override("font_size",15 if best>0 else 18)
+  b.clip_text=true;grid.add_child(b)
+  var selected=i;b.pressed.connect(func():start_house(selected))
  var row=HBoxContainer.new();row.add_theme_constant_override("separation",12);box.add_child(row)
  var classic=Button.new();classic.text="КЛАССИЧЕСКИЕ УРОВНИ";classic.custom_minimum_size=Vector2(318,68);classic.pressed.connect(start_classic);row.add_child(classic)
  var back=Button.new();back.text="НАЗАД";back.custom_minimum_size=Vector2(318,68);back.pressed.connect(dismiss);row.add_child(back)
