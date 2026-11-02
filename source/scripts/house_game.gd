@@ -244,13 +244,57 @@ func start_case(n:int):
   supplies.append({"kind":kind,"pos":supply_pos,"floor":0,"taken":false,"node":supply})
  exit_marker=make_exit_marker();exit_marker.hide()
  set_slice();update_prank_labels();hud.refresh()
+func prop_piece(root:Node3D,mesh:PrimitiveMesh,color:Color,position:Vector3,size:Vector3)->void:
+ var part=MeshInstance3D.new()
+ part.mesh=mesh;part.position=position;part.scale=size
+ var material=StandardMaterial3D.new();material.albedo_color=color;material.roughness=.75
+ part.material_override=material;root.add_child(part)
+func make_prank_prop(kind:int)->Node3D:
+ # Eight distinct low-poly objects: banana, paint, soap, confetti, squeaker, foam, toy and paper.
+ var root=Node3D.new();root.name="PrankProp";root.set_meta("family",kind)
+ match kind:
+  0:
+   for i in range(5):
+    prop_piece(root,SphereMesh.new(),Color("f8cc3c"),Vector3((i-2)*.092,.17+absf(i-2)*.023,0),Vector3(.14,.085,.12))
+  1:
+   prop_piece(root,CylinderMesh.new(),Color("8a5ec8"),Vector3(0,.18,0),Vector3(.23,.28,.23))
+   prop_piece(root,CylinderMesh.new(),Color("d9d8c7"),Vector3(0,.34,0),Vector3(.25,.045,.25))
+  2:
+   prop_piece(root,BoxMesh.new(),Color("76cade"),Vector3(0,.16,0),Vector3(.40,.13,.28))
+   for i in range(3):
+    prop_piece(root,SphereMesh.new(),Color("ddf8f9"),Vector3((i-1)*.12,.27+(i%2)*.06,0),Vector3(.1,.10,.09))
+  3:
+   prop_piece(root,BoxMesh.new(),Color("c94c6c"),Vector3(0,.18,0),Vector3(.36,.28,.31))
+   prop_piece(root,BoxMesh.new(),Color("f5df99"),Vector3(0,.36,0),Vector3(.39,.05,.34))
+   for i in range(4):
+    prop_piece(root,BoxMesh.new(),COLORS[i],Vector3((i-1.5)*.10,.43+.04*(i%2),.07),Vector3(.08,.012,.07))
+  4:
+   prop_piece(root,SphereMesh.new(),Color("f1d96a"),Vector3(0,.18,0),Vector3(.29,.19,.22))
+   prop_piece(root,SphereMesh.new(),Color("f1d96a"),Vector3(.12,.33,0),Vector3(.15,.15,.14))
+   prop_piece(root,BoxMesh.new(),Color("ee9a4c"),Vector3(.28,.31,0),Vector3(.12,.05,.12))
+  5:
+   prop_piece(root,CylinderMesh.new(),Color("a8bcca"),Vector3(0,.15,0),Vector3(.23,.29,.23))
+   for i in range(5):
+    prop_piece(root,SphereMesh.new(),Color("e2f7fd"),Vector3((i%3-1)*.11,.35+(i/3)*.10,0),Vector3(.13,.11,.12))
+  6:
+   prop_piece(root,BoxMesh.new(),Color("80ae63"),Vector3(0,.20,0),Vector3(.43,.17,.25))
+   prop_piece(root,BoxMesh.new(),Color("cde4f5"),Vector3(-.06,.31,0),Vector3(.18,.13,.23))
+   for dx in [-.15,.15]:
+    for dz in [-.15,.15]:
+     prop_piece(root,CylinderMesh.new(),Color("323e45"),Vector3(dx,.11,dz),Vector3(.09,.11,.09))
+  7:
+   prop_piece(root,BoxMesh.new(),Color("f1ebe0"),Vector3(0,.27,0),Vector3(.34,.42,.055))
+   for dx in [-.09,.09]:
+    prop_piece(root,SphereMesh.new(),Color("293239"),Vector3(dx,.34,.04),Vector3(.05,.065,.02))
+   prop_piece(root,BoxMesh.new(),Color("ca7e68"),Vector3(0,.16,.045),Vector3(.16,.02,.02))
+ root.scale=Vector3.ONE*.92
+ return root
 func make_marker(p:Vector2,f:int,kind:int,supply:bool,custom_title:String="")->Node3D:
  var n=Node3D.new();n.position=Vector3(p.x,floor_height(p,f)+.04,p.y);add_child(n)
  var mesh=MeshInstance3D.new();var ring=TorusMesh.new();ring.inner_radius=.28;ring.outer_radius=.32;ring.rings=20;ring.ring_segments=8;mesh.mesh=ring
  var m=StandardMaterial3D.new();m.albedo_color=COLORS[kind];m.emission_enabled=true;m.emission=COLORS[kind];m.emission_energy_multiplier=.25;mesh.material_override=m;n.add_child(mesh)
  var label=Label3D.new();label.text=("ВЗЯТЬ: " if supply else "")+(custom_title if not custom_title.is_empty() else NAMES[kind]);label.font_size=22;label.pixel_size=.009;label.position.y=.58;label.billboard=BaseMaterial3D.BILLBOARD_ENABLED;label.no_depth_test=false;n.add_child(label)
- if supply:
-  var icon=MeshInstance3D.new();var sphere=SphereMesh.new();sphere.radius=.12;sphere.height=.24;icon.mesh=sphere;icon.material_override=m;icon.position.y=.2;n.add_child(icon)
+ n.add_child(make_prank_prop(kind))
  return n
 func update_prank_labels():
  for item in targets+supplies:

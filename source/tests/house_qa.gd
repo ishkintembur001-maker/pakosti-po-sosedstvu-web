@@ -22,6 +22,10 @@ func run():
   check(g.targets.size()>=4 and g.targets.size()<=8,"Expected 4–8 pranks per mission")
   check(g.targets.size()==g.supplies.size(),"Each prank needs a corresponding item")
   check(g.CASES[level].tasks.size()==g.targets.size(),"Mission blueprint and active targets mismatch")
+  for trap_prop in g.targets:
+   var prop=trap_prop.node.find_child("PrankProp",true,false)
+   check(is_instance_valid(prop),"Missing 3D prank prop")
+   if is_instance_valid(prop):check(int(prop.get_meta("family",-1))==int(trap_prop.kind),"Wrong 3D prank prop")
   check(g.bonus_description().length()>0,"Bonus rule lacks a truthful description")
   check(String(g.CASES[level].id)=="m%02d"%(level+1),"Mission id invalid")
   var unique_slots={}
