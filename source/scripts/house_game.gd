@@ -119,6 +119,10 @@ var shadow:DirectionalLight3D
 var warm_room_key:OmniLight3D
 var cool_room_fill:OmniLight3D
 var sfx={}
+const CAPTURE_LINES=["АГА! ПОПАЛСЯ, МЕЛКИЙ ПАКОСТНИК!","ВОТ ТЫ ГДЕ! Я ТЕБЕ СЕЙЧАС ПОКАЖУ!","НУ ВСЁ! ОТ МЕНЯ НЕ УБЕЖИШЬ!"]
+var neighbor_voice:AudioStreamPlayer
+var capture_voice_caption=""
+var previous_catch_voice=-1
 var particles=[]
 var hud_script=preload("res://scripts/house_hud.gd")
 
@@ -161,6 +165,7 @@ func _ready():
  var canvas=CanvasLayer.new();add_child(canvas);hud=hud_script.new();hud.game=self;canvas.add_child(hud)
  for k in ["pickup","arm","prank","caught","victory"]:
   var p=AudioStreamPlayer.new();p.stream=load("res://assets/sfx/%s.wav"%k);p.bus="SFX";add_child(p);sfx[k]=p
+ neighbor_voice=AudioStreamPlayer.new();neighbor_voice.bus="SFX";neighbor_voice.name="NeighborVoice";add_child(neighbor_voice)
  start_case(index)
  var cfg=ConfigFile.new();cfg.load("user://pakosti_release.cfg");set_quality(bool(cfg.get_value("graphics","detail",not (OS.has_feature("web") or OS.has_feature("mobile")))))
 
@@ -241,7 +246,7 @@ func start_case(n:int):
  for t in targets:t.node.queue_free()
  for t in supplies:t.node.queue_free()
  targets.clear();supplies.clear();if is_instance_valid(exit_marker):exit_marker.queue_free()
- inventory=[0,0,0,0,0,0,0,0];lives=3;caught=0;elapsed=0;action_time=0;stick=Vector2.ZERO;hidden=false;reaction=0;anger=0;anger_events=0;bonus_awarded=false;combo=0;best_combo=0;combo_timer=0;capture_time=0;action_pose="pickup";safe_time=4;alert=0;climbing=0;state="playing";player_path.clear();enemy_path.clear();enemy_climbing=0;enemy_search_time=0;enemy_repath_time=0;enemy_path_goal=Vector2.INF;pursuit_memory=0;noise_timer=0;noise_floor=0;last_seen_pos=Vector2.ZERO;waypoint=1
+ inventory=[0,0,0,0,0,0,0,0];capture_voice_caption="";if is_instance_valid(neighbor_voice):neighbor_voice.stop();lives=3;caught=0;elapsed=0;action_time=0;stick=Vector2.ZERO;hidden=false;reaction=0;anger=0;anger_events=0;bonus_awarded=false;combo=0;best_combo=0;combo_timer=0;capture_time=0;action_pose="pickup";safe_time=4;alert=0;climbing=0;state="playing";player_path.clear();enemy_path.clear();enemy_climbing=0;enemy_search_time=0;enemy_repath_time=0;enemy_path_goal=Vector2.INF;pursuit_memory=0;noise_timer=0;noise_floor=0;last_seen_pos=Vector2.ZERO;waypoint=1
  var tasks:Array=CASES[index].tasks
  for i in range(tasks.size()):
   var data:Array=tasks[i]
@@ -444,6 +449,10 @@ func play(k:String):sfx[k].play()
 func begin_capture():
  if capture_time>0 or safe_time>0 or state!="playing":return
  capture_time=1.8;lives-=1;caught+=1;play("caught")
+ var variant=(previous_catch_voice+1+randi_range(0,1))%CAPTURE_LINES.size()
+ previous_catch_voice=variant;capture_voice_caption=CAPTURE_LINES[variant]
+ neighbor_voice.stream=load("res://assets/voices/caught_%d.ogg"%(variant+1))
+ neighbor_voice.play()
  player_path.clear();pending_target=Vector2.INF;pending_action="";escape_route=false;hidden=false
  alert=1.0
 func tick_capture(dt:float):
@@ -456,7 +465,7 @@ func tick_capture(dt:float):
  var arm=neighbor.find_child("Arm_R*",true,false)
  if arm is Node3D and not neighbor.has_meta("animation_player"):arm.rotation.z=sin(phase*17.0)*.25
  if capture_time<=0:
-  hero.rotation.z=0;neighbor.rotation.z=0
+  hero.rotation.z=0;neighbor.rotation.z=0;capture_voice_caption=""
   player_pos=EXIT_POS;floor_id=0;safe_time=5.5;alert=0;enemy_path.clear();set_slice()
   if lives<=0:state="lost";hud.show_result(false)
 func begin_neighbor_stairs():
@@ -714,3 +723,4 @@ func _notification(what):
 func _exit_tree():
  for player in sfx.values():
   if is_instance_valid(player):player.stop()
+ if is_instance_valid(neighbor_voice):neighbor_voice.stop()

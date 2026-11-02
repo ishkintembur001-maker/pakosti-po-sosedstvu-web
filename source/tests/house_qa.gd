@@ -103,7 +103,7 @@ func run():
  g.player_pos=gesture_supply.pos;g.act();g.move_player(1.0/60.0)
  var gesture_anim=g.hero.get_meta("animation_player") as AnimationPlayer
  check(gesture_supply.taken and gesture_anim.current_animation=="pickup","Pickup must use its own animation")
- for supply in g.supplies:supply.taken=true
+ for item_check in g.supplies:item_check.taken=true
  g.player_pos=g.targets[0].pos;g.action_time=0;g.act();g.move_player(1.0/60.0)
  check(g.targets[0].armed and gesture_anim.current_animation=="plant_trap","Trap placement must use its own animation")
  # The upper floor and the neighbor do not disappear when the hero stays downstairs.

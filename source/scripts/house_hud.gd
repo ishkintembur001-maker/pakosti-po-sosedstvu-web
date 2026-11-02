@@ -56,12 +56,12 @@ func refresh():
  bag.text="РЮКЗАК: "+(", ".join(items) if not items.is_empty() else "пусто")+"   •   РЕАКЦИИ %d/%d"%[done,game.targets.size()]
  action.visible=game.escape_ready and game.state=="playing"
  action.disabled=game.climbing>0 or game.paused or game.capture_time>0
- if game.capture_time>0:tip.text="ПОЙМАЛ! СОСЕД УСТРОИЛ ТРЁПКУ!"
+ if game.capture_time>0:tip.text=game.capture_voice_caption
  elif game.hidden:tip.text="ТЫ В УКРЫТИИ"
  elif game.alert>.45:tip.text="Сосед гонится за тобой!"
  elif game.combo>1:tip.text="СЕРИЯ ПАКОСТЕЙ ×%d!"%game.combo
  elif game.escape_ready:tip.text="Нажми «К ВЫХОДУ»"
- elif game.elapsed<12:tip.text="Коснись пола или предмета — герой сам подойдёт"
+ elif game.elapsed<12:tip.text="ЩЁЛКНИ ПО ПОЛУ ИЛИ ПРЕДМЕТУ — ГЕРОЙ САМ ПОДОЙДЁТ" if not OS.has_feature("mobile") else "Коснись пола или предмета — герой сам подойдёт"
  else:tip.text="ЗАДАНИЕ: "+String(game.CASES[game.index].goal)
  queue_redraw()
 func _draw():

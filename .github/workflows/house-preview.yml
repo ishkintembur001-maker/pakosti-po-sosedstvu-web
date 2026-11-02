@@ -27,7 +27,7 @@ jobs:
           chmod +x tools/Godot_v4.4.1-stable_linux.x86_64
           curl -fLsS --retry 3 https://github.com/godotengine/godot-builds/releases/download/4.4.1-stable/Godot_v4.4.1-stable_export_templates.tpz -o tools/templates.tpz
           mkdir -p ~/.local/share/godot/export_templates/4.4.1.stable
-          unzip -oj tools/templates.tpz templates/android_debug.apk templates/android_release.apk -d ~/.local/share/godot/export_templates/4.4.1.stable
+          unzip -oj tools/templates.tpz templates/android_debug.apk templates/android_release.apk templates/windows_debug_x86_64.exe templates/windows_release_x86_64.exe -d ~/.local/share/godot/export_templates/4.4.1.stable
       - name: Build original and new Blender assets
         run: |
           python3 source/art/make_textures.py
@@ -47,7 +47,7 @@ jobs:
           if grep -E 'SCRIPT ERROR|Parse Error|TEST_FAILED' evidence/import.log; then
             echo "Godot script import failed"; exit 1
           fi
-          for test in episode_smoke mobile_qa house_qa animation_qa mobile_layout_qa cast_quality_qa environment_qa visual_integrity_qa owner_models_qa; do
+          for test in episode_smoke mobile_qa house_qa animation_qa mobile_layout_qa desktop_audio_qa cast_quality_qa environment_qa visual_integrity_qa owner_models_qa; do
             timeout --signal=TERM --kill-after=10s 180s tools/Godot_v4.4.1-stable_linux.x86_64 --headless --audio-driver Dummy --path source --script res://tests/$test.gd > evidence/$test.log 2>&1 || {
               echo "Godot test failed or timed out: $test"; tail -n 60 evidence/$test.log; exit 1;
             }
@@ -82,6 +82,16 @@ jobs:
           test -s native-dist/Pakosti-debug.apk
           unzip -t native-dist/Pakosti-debug.apk | tail -1
           python3 -c 'import zipfile; f=zipfile.ZipFile("native-dist/Pakosti-debug.apk"); assert "AndroidManifest.xml" in f.namelist(); assert any("arm64-v8a" in n for n in f.namelist()); print("NATIVE_ANDROID_APK_OK",len(f.namelist()))'
+      - name: Build Windows x86-64 desktop EXE
+        run: |
+          tools/Godot_v4.4.1-stable_linux.x86_64 --headless --path source --export-debug "Windows Desktop" ../native-dist/Pakosti-Windows.exe > evidence/windows-export.log 2>&1
+          test -s native-dist/Pakosti-Windows.exe || { cat evidence/windows-export.log; exit 1; }
+          python3 -c 'from pathlib import Path; p=Path("native-dist/Pakosti-Windows.exe"); assert p.read_bytes()[:2]==b"MZ"; print("WINDOWS_EXE_OK",p.stat().st_size)'
+          cd native-dist && zip -j Pakosti-Windows-preview.zip Pakosti-Windows.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pakosti-windows-desktop-preview
+          path: native-dist/Pakosti-Windows-preview.zip
       - uses: actions/upload-artifact@v4
         if: always()
         with:

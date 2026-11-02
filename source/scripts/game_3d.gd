@@ -153,6 +153,8 @@ var sfx_pickup: AudioStreamPlayer
 var sfx_arm: AudioStreamPlayer
 var sfx_prank: AudioStreamPlayer
 var sfx_caught: AudioStreamPlayer
+var neighbor_voice: AudioStreamPlayer
+var previous_catch_voice: int = -1
 var sfx_victory: AudioStreamPlayer
 var prank_particles = []
 
@@ -208,6 +210,7 @@ func init_sounds():
 	sfx_arm = make_sfx("res://assets/sfx/arm.wav", -11.0)
 	sfx_prank = make_sfx("res://assets/sfx/prank.wav", -8.0)
 	sfx_caught = make_sfx("res://assets/sfx/caught.wav", -10.0)
+	neighbor_voice = make_sfx("res://assets/voices/caught_1.ogg", -4.0)
 	sfx_victory = make_sfx("res://assets/sfx/victory.wav", -9.0)
 
 func make_sfx(path: String, volume: float) -> AudioStreamPlayer:
@@ -1055,6 +1058,10 @@ func tick_enemy(e, dt: float):
 		combo = 0
 		combo_timer = 0.0
 		sound(sfx_caught)
+		var variant=(previous_catch_voice+1+randi_range(0,1))%3
+		previous_catch_voice=variant
+		neighbor_voice.stream=load("res://assets/voices/caught_%d.ogg"%(variant+1))
+		sound(neighbor_voice)
 		player_pos = Vector2(-5.6, 2.2)
 		safe_time = 2.5
 		e["alert"] = 0
