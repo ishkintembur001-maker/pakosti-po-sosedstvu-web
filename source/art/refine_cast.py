@@ -52,17 +52,45 @@ for name in ['TricksterCharacter','NeighborCharacter']:
   wrist.parent=elbow
   wrist.location=(0,-.07,-.18)
   bpy.context.view_layer.update()
+  # The source GLB was draw-call-optimised by merging ALL forearm/palm/
+  # finger surfaces into one skin mesh per shoulder. Split by disconnected
+  # topology, then parent each island to the correct hinge.
+  originals=[piece for piece in list(arm.children)
+             if piece.type=='MESH' and any(
+                 mat and mat.name.startswith('Warm peach skin')
+                 for mat in piece.data.materials)]
+  if not originals:raise RuntimeError('Missing joined forearm skin: '+name+'/'+side)
+  for source_part in originals:
+   bpy.ops.object.select_all(action='DESELECT')
+   source_part.select_set(True)
+   bpy.context.view_layer.objects.active=source_part
+   bpy.ops.object.mode_set(mode='EDIT')
+   bpy.ops.mesh.select_all(action='SELECT')
+   bpy.ops.mesh.separate(type='LOOSE')
+   bpy.ops.object.mode_set(mode='OBJECT')
+  bpy.context.view_layer.update()
+  islands=[piece for piece in arm.children if piece.type=='MESH'
+           and any(mat and mat.name.startswith('Warm peach skin')
+                   for mat in piece.data.materials)]
   moved=0
-  for piece in list(arm.children):
-   if piece.type!='MESH':continue
-   label=piece.name.lower()
-   target=wrist if any(part in label for part in ('hand','finger','thumb')) else (elbow if label.startswith('forearm') else None)
-   if target is None:continue
+  forearms=0
+  hands=0
+  for piece in islands:
+   if not piece.data.vertices:continue
+   # Joined vertices stay expressed in original shoulder-local coordinates.
+   # The forearm is the only part extending up to z=-.29; palm/fingers
+   # have their entire connected surface below z=-.39.
+   highest=max(v.co.z for v in piece.data.vertices)
+   target=elbow if highest>-.36 else wrist
    original_world=piece.matrix_world.copy()
    piece.parent=target
    piece.matrix_world=original_world
+   if target==elbow:forearms+=1
+   else:hands+=1
    moved+=1
-  if moved<4:raise RuntimeError('Cannot find detachable forearm and fingers: '+name+'/'+side)
+  if moved<4 or forearms<1 or hands<3:
+   raise RuntimeError('Could not separate actual forearm/palm/fingers '+name+'/'+side+
+                      ' islands='+str(moved)+' forearm='+str(forearms)+' hand='+str(hands))
   bpy.context.view_layer.update()
   print('ARTICULATED_FOREARM_OK',name,side,moved,flush=True)
  # Named clips now include shoulder, elbow, wrist and hip pivots.
