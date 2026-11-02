@@ -26,6 +26,7 @@ jobs:
           curl -fLsS --retry 3 https://github.com/godotengine/godot-builds/releases/download/4.4.1-stable/Godot_v4.4.1-stable_export_templates.tpz -o tools/templates.tpz
           mkdir -p ~/.local/share/godot/export_templates/4.4.1.stable
           unzip -oj tools/templates.tpz templates/android_debug.apk -d ~/.local/share/godot/export_templates/4.4.1.stable
+          unzip -oj tools/templates.tpz templates/web_debug.zip templates/web_release.zip -d ~/.local/share/godot/export_templates/4.4.1.stable
       - name: Build original and new Blender assets
         run: |
           python3 source/art/make_textures.py
@@ -61,6 +62,17 @@ jobs:
           xvfb-run -a tools/Godot_v4.4.1-stable_linux.x86_64 --audio-driver Dummy --path source --script res://tests/environment_capture.gd > evidence/environment-capture.log 2>&1
           xvfb-run -a tools/Godot_v4.4.1-stable_linux.x86_64 --audio-driver Dummy --path source --script res://tests/house_performance.gd > evidence/performance.log 2>&1
           xvfb-run -a tools/Godot_v4.4.1-stable_linux.x86_64 --audio-driver Dummy --path source --script res://tests/mobile_capture.gd > evidence/mobile-capture.log 2>&1
+      - name: Export playable iPhone Safari Web preview
+        run: |
+          mkdir -p web-preview
+          tools/Godot_v4.4.1-stable_linux.x86_64 --headless --path source --export-debug Web ../web-preview/index.html > evidence/web-export.log 2>&1 || { tail -n 100 evidence/web-export.log; exit 1; }
+          test -s web-preview/index.html
+          test -s web-preview/index.pck
+          echo "PAKOSTI_WEB_PREVIEW_EXPORTED"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pakosti-iphone-safari-preview
+          path: web-preview/
       - name: Configure Android SDK and debug signing
         run: |
           export ANDROID_SDK_ROOT="${ANDROID_HOME}"
