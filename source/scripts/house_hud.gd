@@ -15,7 +15,7 @@ func _ready():
  strip=ColorRect.new();strip.color=Color(.035,.06,.07,.86);strip.mouse_filter=Control.MOUSE_FILTER_IGNORE;add_child(strip)
  top=label(24,Color("f4d192"));objective=label(19,Color("d5e0da"));bag=label(21,Color("f2d298"));tip=label(18,Color("d9e4de"));tip.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
  pause_button=button("II",Vector2.ZERO,Vector2(76,72),func():show_pause());pause_button.add_theme_font_size_override("font_size",27)
- action=button("К ВЫХОДУ",Vector2.ZERO,Vector2(210,76),func():game.guide_to_exit());action.add_theme_font_size_override("font_size",21);action.hide()
+ action=button("ДЕЙСТВИЕ",Vector2.ZERO,Vector2(240,76),func():game.hud_action());action.add_theme_font_size_override("font_size",21);action.hide()
  layout()
 func label(font_size:int,tint:Color)->Label:
  var l=Label.new();l.add_theme_font_size_override("font_size",font_size);l.modulate=tint;l.mouse_filter=Control.MOUSE_FILTER_IGNORE;add_child(l);return l
@@ -31,8 +31,8 @@ func layout():
  top.position=Vector2(safe+8,24);top.size=Vector2(strip.size.x-20,32);top.text_overrun_behavior=TextServer.OVERRUN_TRIM_ELLIPSIS
  objective.position=Vector2(safe+8,59)
  pause_button.position=Vector2(s.x-safe-76,20)
- action.position=Vector2(s.x-safe-210,s.y-105)
- bag.position=Vector2(safe+8,s.y-77);bag.size=Vector2(maxf(100,s.x-2*safe-245),62);bag.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
+ action.position=Vector2(s.x-safe-240,s.y-105)
+ bag.position=Vector2(safe+8,s.y-77);bag.size=Vector2(maxf(100,s.x-2*safe-275),62);bag.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
  tip.position=Vector2(s.x*.5-240,107);tip.size=Vector2(480,30)
  if is_instance_valid(pause_panel):pause_panel.position=(s-pause_panel.size)*.5
  if is_instance_valid(result):result.position=(s-result.size)*.5
@@ -53,15 +53,17 @@ func refresh():
  var items=[]
  for i in range(game.NAMES.size()):
   if game.inventory[i]>0:items.append("%s×%d"%[game.NAMES[i],game.inventory[i]])
- bag.text="РЮКЗАК: "+(", ".join(items) if not items.is_empty() else "пусто")+"   •   РЕАКЦИИ %d/%d"%[done,game.targets.size()]
- action.visible=game.escape_ready and game.state=="playing"
+ bag.text="РЮКЗАК: "+(", ".join(items) if not items.is_empty() else "пусто")+"   •   ДЕТАЛИ %d/%d   •   РЕАКЦИИ %d/%d"%[game.interactables.found_details,game.interactables.caches.size(),done,game.targets.size()]
+ action.visible=game.state=="playing"
+ action.text=game.hint()
  action.disabled=game.climbing>0 or game.paused or game.capture_time>0
  if game.capture_time>0:tip.text=game.capture_voice_caption
+ elif game.message_time>0:tip.text=game.message_text
  elif game.hidden:tip.text="ТЫ В УКРЫТИИ"
  elif game.alert>.45:tip.text="Сосед гонится за тобой!"
  elif game.combo>1:tip.text="СЕРИЯ ПАКОСТЕЙ ×%d!"%game.combo
  elif game.escape_ready:tip.text="Нажми «К ВЫХОДУ»"
- elif game.elapsed<12:tip.text="ЩЁЛКНИ ПО ПОЛУ ИЛИ ПРЕДМЕТУ — ГЕРОЙ САМ ПОДОЙДЁТ" if not OS.has_feature("mobile") else "Коснись пола или предмета — герой сам подойдёт"
+ elif game.elapsed<12:tip.text="Нажми на дверь, лестницу, ящик или предмет"
  else:tip.text="ЗАДАНИЕ: "+String(game.CASES[game.index].goal)
  queue_redraw()
 func _draw():
