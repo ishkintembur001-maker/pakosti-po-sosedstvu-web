@@ -70,6 +70,11 @@ var enemy_climb_start=Vector2.ZERO
 var enemy_climb_end=Vector2.ZERO
 var enemy_stair_world=Vector3.ZERO
 var enemy_search_time=0.0
+var last_seen_pos=Vector2.ZERO
+var pursuit_memory=0.0
+var noise_pos=Vector2.ZERO
+var noise_floor=0
+var noise_timer=0.0
 var waypoint=0
 var route=[Vector2(-4.1,1.1),Vector2(0,1.1),Vector2(3.7,1.1),Vector2(0,1.1)]
 var elapsed=0.0
@@ -232,7 +237,7 @@ func start_case(n:int):
  for t in targets:t.node.queue_free()
  for t in supplies:t.node.queue_free()
  targets.clear();supplies.clear();if is_instance_valid(exit_marker):exit_marker.queue_free()
- inventory=[0,0,0,0,0,0,0,0];lives=3;caught=0;elapsed=0;action_time=0;stick=Vector2.ZERO;hidden=false;reaction=0;anger=0;anger_events=0;bonus_awarded=false;combo=0;best_combo=0;combo_timer=0;capture_time=0;safe_time=4;alert=0;climbing=0;state="playing";player_path.clear();enemy_path.clear();enemy_climbing=0;enemy_search_time=0;enemy_repath_time=0;enemy_path_goal=Vector2.INF;waypoint=1
+ inventory=[0,0,0,0,0,0,0,0];lives=3;caught=0;elapsed=0;action_time=0;stick=Vector2.ZERO;hidden=false;reaction=0;anger=0;anger_events=0;bonus_awarded=false;combo=0;best_combo=0;combo_timer=0;capture_time=0;safe_time=4;alert=0;climbing=0;state="playing";player_path.clear();enemy_path.clear();enemy_climbing=0;enemy_search_time=0;enemy_repath_time=0;enemy_path_goal=Vector2.INF;pursuit_memory=0;noise_timer=0;noise_floor=0;last_seen_pos=Vector2.ZERO;waypoint=1
  var tasks:Array=CASES[index].tasks
  for i in range(tasks.size()):
   var data:Array=tasks[i]
@@ -392,15 +397,19 @@ func hint()->String:
 func near_stair()->bool:
  return player_pos.distance_to(Vector2(6.7,1.8) if floor_id==0 else Vector2(5.0,-2.15))<1.1
 func near_hide()->bool:return player_pos.distance_to(Vector2(-7.1,1.5))<1 or player_pos.distance_to(Vector2(3.25,2.5))<1
+func report_noise(p:Vector2,f:int,loudness:float=1.0):
+ if state!="playing":return
+ noise_pos=p;noise_floor=f;noise_timer=4.5+3.5*loudness
+ if neighbor_floor==f:alert=maxf(alert,minf(.58,.16+loudness*.35))
 func act():
  if paused or state!="playing" or climbing>0:return
  if hidden:hidden=false;return
  for s in supplies:
   if not s.taken and floor_id==s.floor and player_pos.distance_to(s.pos)<.95:
-   s.taken=true;s.node.hide();inventory[s.kind]+=1;play("pickup");action_time=.55;return
+   s.taken=true;s.node.hide();inventory[s.kind]+=1;play("pickup");report_noise(s.pos,s.floor,.25);action_time=.55;return
  for t in targets:
   if not t.used and not t.armed and floor_id==t.floor and player_pos.distance_to(t.pos)<.95:
-   if inventory[t.kind]>0:t.armed=true;inventory[t.kind]-=1;play("arm");action_time=.8
+   if inventory[t.kind]>0:t.armed=true;inventory[t.kind]-=1;play("arm");report_noise(t.pos,t.floor,.8);action_time=.8
    return
  if near_stair():start_climb();return
  if near_hide():hidden=true;player_path.clear()
@@ -408,6 +417,7 @@ func start_climb():
  climbing=3.1;climb_from=floor_id;climb_to=1-floor_id;climb_start=player_pos;climb_end=Vector2(5.0,-2.15) if floor_id==0 else Vector2(6.7,1.8);hidden=false;player_path.clear();set_slice()
 func finish_prank(t):
  t.used=true;t.armed=false;t.node.hide();reaction=2.5;reaction_kind=t.kind;play("prank")
+ noise_timer=0
  anger_events+=1;anger=clampf(anger+.14+float(index)*.002,0,1)
  combo=combo+1 if combo_timer>0 else 1
  best_combo=maxi(best_combo,combo);combo_timer=10.0
@@ -463,6 +473,8 @@ func update_neighbor_stairs(dt:float):
 func tick_enemy(dt:float):
  enemy_search_time=maxf(0,enemy_search_time-dt)
  enemy_repath_time=maxf(0,enemy_repath_time-dt)
+ pursuit_memory=maxf(0,pursuit_memory-dt)
+ noise_timer=maxf(0,noise_timer-dt)
  if enemy_climbing>0:
   update_neighbor_stairs(dt)
   return
@@ -470,24 +482,32 @@ func tick_enemy(dt:float):
   reaction=maxf(0,reaction-dt);return
  var diff=player_pos-neighbor_pos
  var can_see=floor_id==neighbor_floor and not hidden and climbing<=0 and safe_time<=0 and diff.length()<3.1+anger*1.5 and diff.normalized().dot(face)>-.1 and clear_line(neighbor_pos,player_pos,neighbor_floor)
- if can_see:enemy_search_time=maxf(enemy_search_time,6.0+anger*3.0)
+ if can_see:
+  enemy_search_time=maxf(enemy_search_time,6.0+anger*3.0)
+  last_seen_pos=player_pos
+  pursuit_memory=4.0+anger*4.0
  alert=clampf(alert+dt*((1.1+anger*.65+float(CASES[index].difficulty)*.09) if can_see else -.5),0,1)
  var pursue_stairs=enemy_search_time>0 and floor_id!=neighbor_floor
  var stair_entry=Vector2(6.7,1.8) if neighbor_floor==0 else Vector2(5.0,-2.15)
- var dest:Vector2=stair_entry if pursue_stairs else (player_pos if alert>.85 and floor_id==neighbor_floor else route[waypoint])
+ var investigate=noise_timer>0 and noise_floor==neighbor_floor and not can_see
+ var chasing=alert>.85 and floor_id==neighbor_floor and (can_see or pursuit_memory>0)
+ var dest:Vector2=stair_entry if pursue_stairs else (player_pos if can_see and chasing else (last_seen_pos if chasing else (noise_pos if investigate else route[waypoint])))
+ if investigate and neighbor_pos.distance_to(noise_pos)<.55:noise_timer=0;investigate=false
  if neighbor_pos.distance_to(dest)<.50 and pursue_stairs:
   begin_neighbor_stairs();return
- if neighbor_pos.distance_to(dest)<.15 and alert<=.85 and not pursue_stairs:
+ if neighbor_pos.distance_to(dest)<.15 and not chasing and not pursue_stairs and not investigate:
   waypoint=(waypoint+1)%route.size();dest=route[waypoint];enemy_path.clear()
  if enemy_path.is_empty() or enemy_repath_time<=0 or enemy_path_goal.distance_to(dest)>.35:
   enemy_path=path(neighbor_pos,dest,neighbor_floor)
   enemy_path_goal=dest
-  enemy_repath_time=.65 if alert>.85 or pursue_stairs else 1.15
+  enemy_repath_time=.65 if chasing or investigate or pursue_stairs else 1.15
  while not enemy_path.is_empty() and neighbor_pos.distance_to(enemy_path[0])<.055:enemy_path.remove_at(0)
  if not enemy_path.is_empty():
   var step=enemy_path[0]-neighbor_pos
   face=step.normalized()
-  var speed=(2.3+anger*1.35+float(CASES[index].difficulty)*.12) if alert>.85 else (1.15+anger*.75+float(CASES[index].difficulty)*.10)
+  var speed=1.15+anger*.75+float(CASES[index].difficulty)*.10
+  if chasing:speed=2.3+anger*1.35+float(CASES[index].difficulty)*.12
+  elif investigate:speed=1.5+anger*.75+float(CASES[index].difficulty)*.10
   neighbor_pos+=step.limit_length(dt*speed)
  for trap in targets:
   if trap.armed and not trap.used and neighbor_floor==trap.floor and neighbor_pos.distance_to(trap.pos)<.45:finish_prank(trap);return

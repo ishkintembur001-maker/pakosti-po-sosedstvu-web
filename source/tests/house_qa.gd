@@ -97,6 +97,22 @@ func run():
  check(neighbor_anim!=null and neighbor_anim.current_animation=="catch","Only the neighbor must perform capture")
  for frame in range(120):g.tick_capture(1.0/60)
  check(g.capture_time==0 and g.player_pos==g.EXIT_POS,"Hero must respawn after capture")
+ # A sound from a real item should draw an investigator, not a teleporting NPC.
+ g.start_case(0);g.hidden=true;g.safe_time=0;g.alert=0
+ var noise_target=Vector2(2.2,1.1)
+ var initial_distance=g.neighbor_pos.distance_to(noise_target)
+ g.report_noise(noise_target,0,.95)
+ for frame in range(130):g.tick_enemy(1.0/60)
+ check(g.neighbor_pos.distance_to(noise_target)<initial_distance-1.0,"Neighbor ignored an audible prank")
+ check(g.capture_time==0,"Hidden hero should be safe while noise is investigated")
+ # A seen player leaves a remembered location once hidden.
+ g.start_case(0);g.safe_time=0;g.hidden=false
+ g.player_pos=g.neighbor_pos+Vector2(1.1,0);g.face=Vector2.RIGHT
+ g.tick_enemy(1.0/60)
+ check(g.pursuit_memory>0,"Neighbor did not remember a sighting")
+ g.hidden=true
+ var remembered=g.last_seen_pos;g.tick_enemy(1.0/60)
+ check(g.last_seen_pos==remembered,"Last seen point updated while hero was hidden")
  # A neighbor who spotted the hero must use the staircase to follow across floors.
  g.start_case(9)
  g.neighbor_floor=1;g.neighbor_pos=Vector2(5.0,-2.15)
