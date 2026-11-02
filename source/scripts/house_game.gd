@@ -330,13 +330,13 @@ func make_marker(p:Vector2,f:int,kind:int,supply:bool,custom_title:String="")->N
  var n=Node3D.new();n.position=Vector3(p.x,floor_height(p,f)+.04,p.y);add_child(n)
  var mesh=MeshInstance3D.new();var ring=TorusMesh.new();ring.inner_radius=.28;ring.outer_radius=.32;ring.rings=20;ring.ring_segments=8;mesh.mesh=ring
  var m=StandardMaterial3D.new();m.albedo_color=COLORS[kind];m.emission_enabled=true;m.emission=COLORS[kind];m.emission_energy_multiplier=.25;mesh.material_override=m;n.add_child(mesh)
- var label=Label3D.new();label.text=("ВЗЯТЬ: " if supply else "")+(custom_title if not custom_title.is_empty() else NAMES[kind]);label.font_size=22;label.pixel_size=.009;label.position.y=.58;label.billboard=BaseMaterial3D.BILLBOARD_ENABLED;label.no_depth_test=false;n.add_child(label)
+ var label=Label3D.new();label.text=("ВЗЯТЬ: " if supply else "")+(custom_title if not custom_title.is_empty() else NAMES[kind]);label.font_size=15;label.pixel_size=.005;label.position.y=.22;label.billboard=BaseMaterial3D.BILLBOARD_ENABLED;label.no_depth_test=false;n.add_child(label)
  n.add_child(make_prank_prop(kind))
  return n
 func update_prank_labels():
  # Show only the closest nearby world label; never obscure the 3D characters.
  var nearest_label:Label3D=null
- var nearest_distance=1.55
+ var nearest_distance=1.05
  for item in targets+supplies:
   if not is_instance_valid(item.node):continue
   var still_active=not bool(item.get("used",false)) and not bool(item.get("taken",false))
@@ -572,6 +572,7 @@ func _process(dt:float):
  neighbor.position=enemy_stair_world if enemy_climbing>0 else Vector3(neighbor_pos.x,floor_height(neighbor_pos,neighbor_floor)-.015,neighbor_pos.y)
  var enemy_moved=enemy_climbing>0 or neighbor_pos.distance_to(neighbor_before)>.001
  neighbor.rotation.y=atan2(face.x,face.y);animate(neighbor,0 if reaction>0 or not enemy_moved else 1,reaction_kind+1 if reaction>0 else 0)
+ if has_meta("user_models_installed"):preload("res://scripts/user_models_integration.gd").update_visual_grounding(self)
  hero.visible=not hidden;neighbor.visible=neighbor_floor==floor_id or climbing>0 or enemy_climbing>0
  update_contact(hero_contact,hero,player_pos,floor_id,not hidden and climbing<=0)
  update_contact(neighbor_contact,neighbor,neighbor_pos,neighbor_floor,neighbor.visible and enemy_climbing<=0)

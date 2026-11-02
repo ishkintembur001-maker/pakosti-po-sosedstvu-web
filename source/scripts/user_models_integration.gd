@@ -82,3 +82,21 @@ static func try_install(game) -> bool:
  game.set_meta("user_models_installed",true)
  print("OWNER_3D_MODELS_ENABLED: hero, neighbor, both storeys, roof hidden")
  return true
+
+# The source scan's geometric floors vary from the original gameplay height map.
+# Move only visuals, leaving the native AStar navigation and gameplay unchanged.
+static func update_visual_grounding(game) -> void:
+ if not game.has_meta("user_models_installed"):
+  return
+ var h=game.hero.find_child("OwnersHighDetailHero",true,false)
+ var n=game.neighbor.find_child("OwnersHighDetailNeighbor",true,false)
+ if h is Node3D:
+  var east=clampf((game.player_pos.x+4.2)/8.0,0.0,1.0)
+  var first_floor_bias=.52+.32*east
+  var blend=clampf(game.hero.position.y/game.H,0.0,1.0)
+  h.position.y=.79+lerpf(first_floor_bias,-.10,blend)
+ if n is Node3D:
+  var east=clampf((game.neighbor_pos.x+4.2)/8.0,0.0,1.0)
+  var first_floor_bias=.52+.32*east
+  var blend=clampf(game.neighbor.position.y/game.H,0.0,1.0)
+  n.position.y=.91+lerpf(first_floor_bias,-.10,blend)

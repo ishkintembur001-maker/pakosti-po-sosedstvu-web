@@ -1,0 +1,48 @@
+extends SceneTree
+var failures=0
+func check(ok:bool,reason:String)->void:
+ if not ok:
+  failures+=1
+  push_error("OWNER_MODEL_QA_FAIL: "+reason)
+func _initialize()->void:call_deferred("run")
+func run()->void:
+ if not preload("res://scripts/user_models_integration.gd").available():
+  print("OWNER_MODEL_QA_SKIPPED: no model pack")
+  quit(0)
+  return
+ var game=load("res://scenes/house.tscn").instantiate()
+ root.add_child(game)
+ await process_frame
+ game.set_process(false)
+ check(game.get_meta("user_models_installed",false),"Original user GLBs were not integrated")
+ check(game.CASES.size()==24,"24 missions were lost")
+ check(game.navs.size()==2,"Two navigable floors were lost")
+ game._process(0)
+ var h=game.hero.find_child("OwnersHighDetailHero",true,false)
+ var n=game.neighbor.find_child("OwnersHighDetailNeighbor",true,false)
+ check(h!=null and h.position.y>1.0,"Lower-floor hero feet are buried in the scan")
+ check(n!=null and n.position.y>1.0,"Lower-floor neighbor feet are buried in the scan")
+ check(h!=null,"User hero GLB not installed")
+ check(n!=null,"User neighbor GLB not installed")
+ var building=game.find_child("OwnersHighDetailTwoStoreyHouse",true,false)
+ check(building!=null,"User house not installed")
+ if building!=null:
+  check(building.find_child("HouseGroundFloor",true,false)!=null,"First floor missing")
+  var upper=building.find_child("HouseSecondFloor",true,false)
+  check(upper!=null and upper.visible,"Second floor must be present and visible")
+  check(building.find_child("HouseRoof",true,false)!=null,"Roof missing")
+ check(not game.environment_root.visible,"Old house overlaps the new scan")
+ var hp=game.hero.get_meta("animation_player") as AnimationPlayer
+ var np=game.neighbor.get_meta("animation_player") as AnimationPlayer
+ check(hp!=null and hp.has_animation("walk"),"Hero walk clip missing")
+ check(np!=null and np.has_animation("walk"),"Neighbor walk clip missing")
+ check(hp!=null and hp.has_animation("caught_react") and not hp.has_animation("catch"),"Hero must only react defensively")
+ check(np!=null and np.has_animation("catch") and not np.has_animation("caught_react"),"Neighbor must initiate capture")
+ for mission in range(24):
+  game.start_case(mission)
+  check(game.targets.size()>=4 and game.targets.size()<=8,"Mission %d incomplete"%(mission+1))
+ print("OWNER_MODEL_QA_DONE failures=",failures)
+ game.queue_free()
+ await process_frame
+ await process_frame
+ quit(1 if failures else 0)

@@ -14,6 +14,21 @@ func run():
   var forbidden="catch" if actor==g.hero else "caught_react"
   if not p.has_animation(special):push_error("Missing role-specific clip "+special);fail+=1
   if p.has_animation(forbidden):push_error("Forbidden capture clip on actor "+forbidden);fail+=1
-  var limb=actor.find_child("Arm_L*",true,false);p.play("walk");p.seek(0,true);var a=limb.quaternion;p.advance(.25)
-  if a.is_equal_approx(limb.quaternion):push_error("Animation did not move shoulder");fail+=1
+  # Rigged owner GLBs use Skeleton3D; original low-poly actors use pivot nodes.
+  var skeletons=actor.find_children("*","Skeleton3D",true,false)
+  if not skeletons.is_empty():
+   var skeleton=skeletons[0] as Skeleton3D
+   if skeleton.get_bone_count()!=17:push_error("Owner GLB has wrong bone count");fail+=1
+   var bone_id=skeleton.find_bone("LeftUpperArm")
+   if bone_id<0:push_error("Left shoulder bone missing");fail+=1;continue
+   p.play("walk");p.seek(0,true);p.advance(0)
+   var before=skeleton.get_bone_pose_rotation(bone_id)
+   p.seek(p.get_animation("walk").length*.25,true);p.advance(0)
+   if before.is_equal_approx(skeleton.get_bone_pose_rotation(bone_id)):
+    push_error("Skinned shoulder is not animated");fail+=1
+  else:
+   var limb=actor.find_child("Arm_L*",true,false)
+   if limb==null:push_error("Old shoulder pivot missing");fail+=1;continue
+   p.play("walk");p.seek(0,true);var before=limb.quaternion;p.advance(.25)
+   if before.is_equal_approx(limb.quaternion):push_error("Animation did not move shoulder");fail+=1
  g.queue_free();await process_frame;await process_frame;print("ANIMATION_QA failures=",fail);quit(fail)
