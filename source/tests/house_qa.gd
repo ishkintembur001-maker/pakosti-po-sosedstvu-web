@@ -97,6 +97,18 @@ func run():
   g.start_case(mission)
   check(g.targets.size()==g.supplies.size() and g.targets.size()>0,"New challenge has no playable targets")
  check(not g.hud.action.visible,"Exit button shown before all traps complete")
+ # Picking up a supply and arming a trap must play different hand gestures.
+ g.start_case(0)
+ var gesture_supply=g.supplies[0]
+ g.player_pos=gesture_supply.pos;g.act();g.move_player(1.0/60.0)
+ var gesture_anim=g.hero.get_meta("animation_player") as AnimationPlayer
+ check(gesture_supply.taken and gesture_anim.current_animation=="pickup","Pickup must use its own animation")
+ for supply in g.supplies:supply.taken=true
+ g.player_pos=g.targets[0].pos;g.action_time=0;g.act();g.move_player(1.0/60.0)
+ check(g.targets[0].armed and gesture_anim.current_animation=="plant_trap","Trap placement must use its own animation")
+ # The upper floor and the neighbor do not disappear when the hero stays downstairs.
+ g.start_case(9);g._process(1.0/60.0)
+ check(g.floor_id==0 and g.neighbor_floor==1 and g.neighbor.visible,"Visible two-storey dollhouse hid the upstairs neighbor")
  g.start_case(0);g.safe_time=0;g.begin_capture()
  check(g.capture_time>0 and g.lives==2,"Capture must cost a life and start scene")
  g.tick_capture(.04)

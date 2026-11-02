@@ -102,6 +102,7 @@ var climb_end=Vector2.ZERO
 var stick_id=-100
 var stick=Vector2.ZERO
 var action_time=0.0
+var action_pose="pickup"
 var quality=true
 var fps_time=0.0
 var fps_frames=0
@@ -240,7 +241,7 @@ func start_case(n:int):
  for t in targets:t.node.queue_free()
  for t in supplies:t.node.queue_free()
  targets.clear();supplies.clear();if is_instance_valid(exit_marker):exit_marker.queue_free()
- inventory=[0,0,0,0,0,0,0,0];lives=3;caught=0;elapsed=0;action_time=0;stick=Vector2.ZERO;hidden=false;reaction=0;anger=0;anger_events=0;bonus_awarded=false;combo=0;best_combo=0;combo_timer=0;capture_time=0;safe_time=4;alert=0;climbing=0;state="playing";player_path.clear();enemy_path.clear();enemy_climbing=0;enemy_search_time=0;enemy_repath_time=0;enemy_path_goal=Vector2.INF;pursuit_memory=0;noise_timer=0;noise_floor=0;last_seen_pos=Vector2.ZERO;waypoint=1
+ inventory=[0,0,0,0,0,0,0,0];lives=3;caught=0;elapsed=0;action_time=0;stick=Vector2.ZERO;hidden=false;reaction=0;anger=0;anger_events=0;bonus_awarded=false;combo=0;best_combo=0;combo_timer=0;capture_time=0;action_pose="pickup";safe_time=4;alert=0;climbing=0;state="playing";player_path.clear();enemy_path.clear();enemy_climbing=0;enemy_search_time=0;enemy_repath_time=0;enemy_path_goal=Vector2.INF;pursuit_memory=0;noise_timer=0;noise_floor=0;last_seen_pos=Vector2.ZERO;waypoint=1
  var tasks:Array=CASES[index].tasks
  for i in range(tasks.size()):
   var data:Array=tasks[i]
@@ -418,10 +419,10 @@ func act():
  if hidden:hidden=false;return
  for s in supplies:
   if not s.taken and floor_id==s.floor and player_pos.distance_to(s.pos)<.95:
-   s.taken=true;s.node.hide();inventory[s.kind]+=1;play("pickup");report_noise(s.pos,s.floor,.25);action_time=.55;return
+   s.taken=true;s.node.hide();inventory[s.kind]+=1;play("pickup");report_noise(s.pos,s.floor,.25);action_pose="pickup";action_time=.55;return
  for t in targets:
   if not t.used and not t.armed and floor_id==t.floor and player_pos.distance_to(t.pos)<.95:
-   if inventory[t.kind]>0:t.armed=true;inventory[t.kind]-=1;play("arm");report_noise(t.pos,t.floor,.8);action_time=.8
+   if inventory[t.kind]>0:t.armed=true;inventory[t.kind]-=1;play("arm");report_noise(t.pos,t.floor,.8);action_pose="plant_trap";action_time=.8
    return
  if near_stair():start_climb();return
  if near_hide():hidden=true;player_path.clear()
@@ -577,7 +578,7 @@ func _process(dt:float):
  var enemy_moved=enemy_climbing>0 or neighbor_pos.distance_to(neighbor_before)>.001
  neighbor.rotation.y=atan2(face.x,face.y);animate(neighbor,0 if reaction>0 or not enemy_moved else 1,reaction_kind+1 if reaction>0 else 0)
  if has_meta("user_models_installed"):preload("res://scripts/user_models_integration.gd").update_visual_grounding(self)
- hero.visible=not hidden;neighbor.visible=neighbor_floor==floor_id or climbing>0 or enemy_climbing>0
+ hero.visible=not hidden;neighbor.visible=true # Both visible floors remain part of one dollhouse.
  update_contact(hero_contact,hero,player_pos,floor_id,not hidden and climbing<=0)
  update_contact(neighbor_contact,neighbor,neighbor_pos,neighbor_floor,neighbor.visible and enemy_climbing<=0)
  var focus=hero.position+Vector3(0,.8,0);var target=Vector3(clampf(focus.x,-3,3),H*.65,0)
@@ -610,7 +611,7 @@ func move_player(dt:float):
  hero.position=Vector3(player_pos.x,floor_height(player_pos,floor_id)-.015*hero.scale.y,player_pos.y)
  if motion.length()>.1:hero.rotation.y=lerp_angle(hero.rotation.y,atan2(motion.x,motion.y),minf(1,dt*12))
  var actual_walk=player_pos.distance_to(player_before)>.001
- animate(hero,1.0 if actual_walk and action_time<=0 else 0.0,-1 if action_time>0 else 0)
+ animate(hero,1.0 if actual_walk and action_time<=0 else 0.0,(-2 if action_pose=="pickup" else -1) if action_time>0 else 0)
  if pending_target!=Vector2.INF and player_pos.distance_to(pending_target)<.8:complete_walk_action()
  if escape_ready and escape_route and floor_id==0 and player_pos.distance_to(EXIT_POS)<.8:finish_escape()
 func attach_animations(actor:Node3D,source_name:String):
@@ -642,6 +643,7 @@ func animate(actor:Node3D,speed:float,pose:int):
   elif pose==101:clip="caught_react" if actor==hero else "idle"
   elif pose==102:clip="catch" if actor==neighbor else "idle"
   elif pose==-1:clip="plant_trap"
+  elif pose==-2:clip="pickup"
   elif pose in [1,3]:clip="react_slip"
   elif pose>0:clip="react_surprise"
   if player.has_animation(clip) and player.current_animation!=clip:player.play(clip,.16)
