@@ -1,103 +1,94 @@
 {
-  "schema_version": 1,
-  "title": "Пакости по соседству",
-  "status": "production_design_not_playable_campaign",
-  "chapters": [
-    {
-      "id": 1,
-      "title": "Гость без приглашения"
-    },
-    {
-      "id": 2,
-      "title": "Завтрак с сюрпризом"
-    },
-    {
-      "id": 3,
-      "title": "День большой уборки"
-    },
-    {
-      "id": 4,
-      "title": "Любимые привычки"
-    },
-    {
-      "id": 5,
-      "title": "Подготовка к празднику"
-    },
-    {
-      "id": 6,
-      "title": "Весь дом против соседа"
-    }
-  ],
+  "schema_version": 2,
+  "title": "Пакости по соседству — оригинальные модели",
+  "status": "playable_prototype_matches_source_cases",
+  "source_of_truth": "source/scripts/house_game.gd CASES",
+  "model_source": "source/assets/user_models/owner_manifest.json",
+  "floors": 2,
   "rooms": [
     {
-      "id": "workshop",
-      "title": "Мастерская",
-      "floor": 0
-    },
-    {
-      "id": "kitchen",
-      "title": "Кухня",
-      "floor": 0
-    },
-    {
-      "id": "pantry",
-      "title": "Кладовая",
-      "floor": 0
-    },
-    {
-      "id": "foyer",
-      "title": "Прихожая и главная лестница",
-      "floor": 0
-    },
-    {
-      "id": "dining",
-      "title": "Столовая",
-      "floor": 0
+      "id": "entrance",
+      "title": "Прихожая",
+      "floor": 0,
+      "slots": [
+        0,
+        1
+      ]
     },
     {
       "id": "living",
       "title": "Гостиная",
-      "floor": 0
+      "floor": 0,
+      "slots": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
     },
     {
-      "id": "laundry",
-      "title": "Прачечная",
-      "floor": 1
-    },
-    {
-      "id": "bathroom",
-      "title": "Ванная",
-      "floor": 1
+      "id": "kitchen",
+      "title": "Кухня",
+      "floor": 0,
+      "slots": [
+        7
+      ]
     },
     {
       "id": "bedroom",
       "title": "Спальня",
-      "floor": 1
+      "floor": 1,
+      "slots": [
+        0,
+        1
+      ]
     },
     {
-      "id": "gallery",
-      "title": "Галерея и верхняя площадка",
-      "floor": 1
-    },
-    {
-      "id": "library",
-      "title": "Библиотека",
-      "floor": 1
+      "id": "upper_living",
+      "title": "Верхняя комната",
+      "floor": 1,
+      "slots": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
     },
     {
       "id": "study",
       "title": "Кабинет",
-      "floor": 1
+      "floor": 1,
+      "slots": [
+        7
+      ]
+    }
+  ],
+  "chapters": [
+    {
+      "id": 1,
+      "title": "Сосед не ждёт гостей"
     },
     {
-      "id": "garage",
-      "title": "Гараж",
-      "floor": 0
+      "id": 2,
+      "title": "Кухонные сюрпризы"
     },
     {
-      "id": "garden",
-      "title": "Двор и терраса",
-      "floor": 0
+      "id": 3,
+      "title": "Наверх без приглашения"
+    },
+    {
+      "id": 4,
+      "title": "Весь дом в ловушках"
+    },
+    {
+      "id": 5,
+      "title": "Погоня на двух этажах"
+    },
+    {
+      "id": 6,
+      "title": "Большой финал"
     }
   ],
   "missions": [
@@ -105,1076 +96,1910 @@
       "id": "m01",
       "chapter": 1,
       "title": "Первый след",
-      "rooms": [
-        "foyer",
+      "floor": 0,
+      "goal": "Подготовь прихожую и уйди незаметно",
+      "bonus": "Без подсказки пройти за спиной соседа",
+      "bonus_rule": "clean",
+      "par_seconds": 240,
+      "difficulty": 0,
+      "room_ids": [
+        "entrance",
+        "kitchen",
         "living"
       ],
-      "items": [
-        "banana"
-      ],
-      "objectives": [
+      "tasks": [
         {
           "id": "m01_o1",
-          "text": "Подобрать банан в прихожей",
-          "requires": []
+          "action": "collect_then_arm_and_wait",
+          "item": "Банан",
+          "kind": 0,
+          "trap_slot": 0,
+          "room": "entrance",
+          "label": "Кожура у ковра",
+          "floor": 0
         },
         {
           "id": "m01_o2",
-          "text": "Положить кожуру у ковра",
-          "requires": [
-            "m01_o1"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Пищалка",
+          "kind": 4,
+          "trap_slot": 2,
+          "room": "living",
+          "label": "Пищалка под креслом",
+          "floor": 0
         },
         {
           "id": "m01_o3",
-          "text": "Спрятаться за дверью и дождаться реакции",
-          "requires": [
-            "m01_o2"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Конфетти",
+          "kind": 3,
+          "trap_slot": 4,
+          "room": "living",
+          "label": "Конфетти у порога",
+          "floor": 0
+        },
+        {
+          "id": "m01_o4",
+          "action": "collect_then_arm_and_wait",
+          "item": "Мыло",
+          "kind": 2,
+          "trap_slot": 7,
+          "room": "kitchen",
+          "label": "Мыльная дорожка",
+          "floor": 0
         }
       ],
-      "new_mechanic": "Обучение направлению взгляда и укрытию",
-      "neighbor_behavior": "Один медленный круг: кресло - телевизор - прихожая",
-      "bonus": "Без подсказки пройти за спиной соседа",
-      "par_seconds": 180,
-      "time_limit_is_failure": false,
-      "unlock_after": null,
-      "implementation_status": "designed_not_implemented"
+      "completion_rule": "Запустить все пакости, дождаться реакций соседа и выйти через выход на первом этаже (Godot floor_id = 0)"
     },
     {
       "id": "m02",
       "chapter": 1,
       "title": "Музыкальное кресло",
-      "rooms": [
-        "pantry",
+      "floor": 0,
+      "goal": "Заставь кресло издавать смешные звуки",
+      "bonus": "Установить пищалку без погони",
+      "bonus_rule": "clean",
+      "par_seconds": 254,
+      "difficulty": 0,
+      "room_ids": [
+        "entrance",
+        "kitchen",
         "living"
       ],
-      "items": [
-        "squeaker"
-      ],
-      "objectives": [
+      "tasks": [
         {
           "id": "m02_o1",
-          "text": "Найти игрушечную пищалку",
-          "requires": []
+          "action": "collect_then_arm_and_wait",
+          "item": "Пищалка",
+          "kind": 4,
+          "trap_slot": 7,
+          "room": "kitchen",
+          "label": "Пищалка под креслом",
+          "floor": 0
         },
         {
           "id": "m02_o2",
-          "text": "Подложить её под подушку кресла",
-          "requires": [
-            "m02_o1"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Пищалка",
+          "kind": 4,
+          "trap_slot": 4,
+          "room": "living",
+          "label": "Шумная подушка",
+          "floor": 0
         },
         {
           "id": "m02_o3",
-          "text": "Не попасться во время проверки кресла",
-          "requires": [
-            "m02_o2"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Пищалка",
+          "kind": 4,
+          "trap_slot": 2,
+          "room": "living",
+          "label": "Музыкальное кресло",
+          "floor": 0
+        },
+        {
+          "id": "m02_o4",
+          "action": "collect_then_arm_and_wait",
+          "item": "Бумажная шутка",
+          "kind": 7,
+          "trap_slot": 0,
+          "room": "entrance",
+          "label": "Шуточная наклейка",
+          "floor": 0
         }
       ],
-      "new_mechanic": "Взаимодействие с предметом мебели",
-      "neighbor_behavior": "Сосед задерживается у полки перед тем, как сесть",
-      "bonus": "Установить пищалку без погони",
-      "par_seconds": 210,
-      "time_limit_is_failure": false,
-      "unlock_after": "m01",
-      "implementation_status": "designed_not_implemented"
+      "completion_rule": "Запустить все пакости, дождаться реакций соседа и выйти через выход на первом этаже (Godot floor_id = 0)"
     },
     {
       "id": "m03",
       "chapter": 1,
       "title": "Красочный привет",
-      "rooms": [
-        "workshop",
-        "foyer"
+      "floor": 0,
+      "goal": "Создай серию цветных следов",
+      "bonus": "Уйти до начала осмотра",
+      "bonus_rule": "fast",
+      "par_seconds": 268,
+      "difficulty": 0,
+      "room_ids": [
+        "entrance",
+        "kitchen",
+        "living"
       ],
-      "items": [
-        "washable_paint",
-        "stamp_pad"
-      ],
-      "objectives": [
+      "tasks": [
         {
           "id": "m03_o1",
-          "text": "Найти смываемую краску",
-          "requires": []
+          "action": "collect_then_arm_and_wait",
+          "item": "Краска",
+          "kind": 1,
+          "trap_slot": 2,
+          "room": "living",
+          "label": "Смываемый отпечаток",
+          "floor": 0
         },
         {
           "id": "m03_o2",
-          "text": "Подготовить смешной след на коврике",
-          "requires": [
-            "m03_o1"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Краска",
+          "kind": 1,
+          "trap_slot": 0,
+          "room": "entrance",
+          "label": "Красочный след",
+          "floor": 0
         },
         {
           "id": "m03_o3",
-          "text": "Перенаправить соседа звонком в дверь",
-          "requires": [
-            "m03_o2"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Краска",
+          "kind": 1,
+          "trap_slot": 7,
+          "room": "kitchen",
+          "label": "Краска на коврике",
+          "floor": 0
+        },
+        {
+          "id": "m03_o4",
+          "action": "collect_then_arm_and_wait",
+          "item": "Конфетти",
+          "kind": 3,
+          "trap_slot": 4,
+          "room": "living",
+          "label": "Бумажный сюрприз",
+          "floor": 0
         }
       ],
-      "new_mechanic": "Отвлечение звуком с безопасного расстояния",
-      "neighbor_behavior": "Сначала идёт на звонок, затем осматривает коврик",
-      "bonus": "Уйти до начала осмотра",
-      "par_seconds": 240,
-      "time_limit_is_failure": false,
-      "unlock_after": "m02",
-      "implementation_status": "designed_not_implemented"
+      "completion_rule": "Запустить все пакости, дождаться реакций соседа и выйти через выход на первом этаже (Godot floor_id = 0)"
     },
     {
       "id": "m04",
       "chapter": 1,
       "title": "Один шаг до комбо",
-      "rooms": [
-        "living",
-        "foyer",
-        "pantry"
+      "floor": 0,
+      "goal": "Свяжи сюрпризы в гостиной",
+      "bonus": "Обе реакции в одном окне комбо",
+      "bonus_rule": "combo2",
+      "par_seconds": 282,
+      "difficulty": 0,
+      "room_ids": [
+        "entrance",
+        "kitchen",
+        "living"
       ],
-      "items": [
-        "banana",
-        "squeaker"
-      ],
-      "objectives": [
+      "tasks": [
         {
           "id": "m04_o1",
-          "text": "Подготовить кресло",
-          "requires": []
+          "action": "collect_then_arm_and_wait",
+          "item": "Банан",
+          "kind": 0,
+          "trap_slot": 4,
+          "room": "living",
+          "label": "Кожура у ковра",
+          "floor": 0
         },
         {
           "id": "m04_o2",
-          "text": "Установить банановую ловушку на обратном пути",
-          "requires": [
-            "m04_o1"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Пищалка",
+          "kind": 4,
+          "trap_slot": 7,
+          "room": "kitchen",
+          "label": "Пищалка под креслом",
+          "floor": 0
         },
         {
           "id": "m04_o3",
-          "text": "Соединить реакции в одну цепочку",
-          "requires": [
-            "m04_o2"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Банан",
+          "kind": 0,
+          "trap_slot": 0,
+          "room": "entrance",
+          "label": "Кожура на обратном пути",
+          "floor": 0
+        },
+        {
+          "id": "m04_o4",
+          "action": "collect_then_arm_and_wait",
+          "item": "Пищалка",
+          "kind": 4,
+          "trap_slot": 2,
+          "room": "living",
+          "label": "Музыкальное кресло",
+          "floor": 0
+        },
+        {
+          "id": "m04_o5",
+          "action": "collect_then_arm_and_wait",
+          "item": "Конфетти",
+          "kind": 3,
+          "trap_slot": 6,
+          "room": "living",
+          "label": "Конфетти у порога",
+          "floor": 0
         }
       ],
-      "new_mechanic": "Последовательность двух реакций",
-      "neighbor_behavior": "После кресла меняет ближайший маршрут",
-      "bonus": "Обе реакции в одном окне комбо",
-      "par_seconds": 300,
-      "time_limit_is_failure": false,
-      "unlock_after": "m03",
-      "implementation_status": "designed_not_implemented"
+      "completion_rule": "Запустить все пакости, дождаться реакций соседа и выйти через выход на первом этаже (Godot floor_id = 0)"
     },
     {
       "id": "m05",
       "chapter": 2,
       "title": "Пенный капучино",
-      "rooms": [
+      "floor": 0,
+      "goal": "Подготовь шуточный завтрак",
+      "bonus": "Не трогать предметы после сервировки",
+      "bonus_rule": "clean",
+      "par_seconds": 296,
+      "difficulty": 0,
+      "room_ids": [
+        "entrance",
         "kitchen",
-        "pantry"
+        "living"
       ],
-      "items": [
-        "culinary_foam",
-        "cup"
-      ],
-      "objectives": [
+      "tasks": [
         {
           "id": "m05_o1",
-          "text": "Взять съедобную пену из кладовой",
-          "requires": []
+          "action": "collect_then_arm_and_wait",
+          "item": "Пена",
+          "kind": 5,
+          "trap_slot": 0,
+          "room": "entrance",
+          "label": "Пенный капучино",
+          "floor": 0
         },
         {
           "id": "m05_o2",
-          "text": "Подготовить чашку-сюрприз",
-          "requires": [
-            "m05_o1"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Пена",
+          "kind": 5,
+          "trap_slot": 4,
+          "room": "living",
+          "label": "Пенный стакан",
+          "floor": 0
         },
         {
           "id": "m05_o3",
-          "text": "Дождаться завтрака из укрытия",
-          "requires": [
-            "m05_o2"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Игрушка",
+          "kind": 6,
+          "trap_slot": 7,
+          "room": "kitchen",
+          "label": "Игрушечный флажок",
+          "floor": 0
+        },
+        {
+          "id": "m05_o4",
+          "action": "collect_then_arm_and_wait",
+          "item": "Мыло",
+          "kind": 2,
+          "trap_slot": 2,
+          "room": "living",
+          "label": "Мыльная дорожка",
+          "floor": 0
+        },
+        {
+          "id": "m05_o5",
+          "action": "collect_then_arm_and_wait",
+          "item": "Банан",
+          "kind": 0,
+          "trap_slot": 5,
+          "room": "living",
+          "label": "Скользкий сюрприз",
+          "floor": 0
         }
       ],
-      "new_mechanic": "Расписание бытового действия",
-      "neighbor_behavior": "Чайник - сервировка - стол; шум прерывает сервировку",
-      "bonus": "Не трогать предметы после сервировки",
-      "par_seconds": 300,
-      "time_limit_is_failure": false,
-      "unlock_after": "m04",
-      "implementation_status": "designed_not_implemented"
+      "completion_rule": "Запустить все пакости, дождаться реакций соседа и выйти через выход на первом этаже (Godot floor_id = 0)"
     },
     {
       "id": "m06",
       "chapter": 2,
       "title": "Оживший тостер",
-      "rooms": [
-        "workshop",
-        "kitchen"
+      "floor": 0,
+      "goal": "Сыграй на игрушечных сигналах",
+      "bonus": "Попасть в нужный момент без повторной попытки",
+      "bonus_rule": "combo2",
+      "par_seconds": 310,
+      "difficulty": 1,
+      "room_ids": [
+        "entrance",
+        "kitchen",
+        "living"
       ],
-      "items": [
-        "toy_spring",
-        "paper_flag"
-      ],
-      "objectives": [
+      "tasks": [
         {
           "id": "m06_o1",
-          "text": "Собрать игрушечный флажок",
-          "requires": []
+          "action": "collect_then_arm_and_wait",
+          "item": "Игрушка",
+          "kind": 6,
+          "trap_slot": 7,
+          "room": "kitchen",
+          "label": "Игрушечный флажок",
+          "floor": 0
         },
         {
           "id": "m06_o2",
-          "text": "Закрепить его рядом с тостером",
-          "requires": [
-            "m06_o1"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Игрушка",
+          "kind": 6,
+          "trap_slot": 2,
+          "room": "living",
+          "label": "Игрушечный сигнал",
+          "floor": 0
         },
         {
           "id": "m06_o3",
-          "text": "Запустить сюрприз в момент завтрака",
-          "requires": [
-            "m06_o2"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Пищалка",
+          "kind": 4,
+          "trap_slot": 4,
+          "room": "living",
+          "label": "Звуковой сигнал",
+          "floor": 0
+        },
+        {
+          "id": "m06_o4",
+          "action": "collect_then_arm_and_wait",
+          "item": "Бумажная шутка",
+          "kind": 7,
+          "trap_slot": 0,
+          "room": "entrance",
+          "label": "Забавные карточки",
+          "floor": 0
+        },
+        {
+          "id": "m06_o5",
+          "action": "collect_then_arm_and_wait",
+          "item": "Пена",
+          "kind": 5,
+          "trap_slot": 3,
+          "room": "living",
+          "label": "Пенный стакан",
+          "floor": 0
         }
       ],
-      "new_mechanic": "Синхронизация действия с бытовой анимацией",
-      "neighbor_behavior": "Проверяет звук только после тоста",
-      "bonus": "Попасть в нужный момент без повторной попытки",
-      "par_seconds": 300,
-      "time_limit_is_failure": false,
-      "unlock_after": "m05",
-      "implementation_status": "designed_not_implemented"
+      "completion_rule": "Запустить все пакости, дождаться реакций соседа и выйти через выход на первом этаже (Godot floor_id = 0)"
     },
     {
       "id": "m07",
       "chapter": 2,
       "title": "Обед наоборот",
-      "rooms": [
-        "dining",
-        "pantry",
-        "kitchen"
+      "floor": 0,
+      "goal": "Перепутай столовую сервировку",
+      "bonus": "Правильная раскладка с первой попытки",
+      "bonus_rule": "fast",
+      "par_seconds": 324,
+      "difficulty": 1,
+      "room_ids": [
+        "entrance",
+        "kitchen",
+        "living"
       ],
-      "items": [
-        "placemats",
-        "menu_cards"
-      ],
-      "objectives": [
+      "tasks": [
         {
           "id": "m07_o1",
-          "text": "Поменять смешные карточки блюд",
-          "requires": []
+          "action": "collect_then_arm_and_wait",
+          "item": "Бумажная шутка",
+          "kind": 7,
+          "trap_slot": 0,
+          "room": "entrance",
+          "label": "Забавные карточки",
+          "floor": 0
         },
         {
           "id": "m07_o2",
-          "text": "Переставить салфетки по рисунку",
-          "requires": [
-            "m07_o1"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Бумажная шутка",
+          "kind": 7,
+          "trap_slot": 2,
+          "room": "living",
+          "label": "Подмена карточек",
+          "floor": 0
         },
         {
           "id": "m07_o3",
-          "text": "Отвлечь соседа, чтобы закончить сервировку",
-          "requires": [
-            "m07_o2"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Бумажная шутка",
+          "kind": 7,
+          "trap_slot": 4,
+          "room": "living",
+          "label": "Шуточная наклейка",
+          "floor": 0
+        },
+        {
+          "id": "m07_o4",
+          "action": "collect_then_arm_and_wait",
+          "item": "Конфетти",
+          "kind": 3,
+          "trap_slot": 7,
+          "room": "kitchen",
+          "label": "Конфетти у порога",
+          "floor": 0
+        },
+        {
+          "id": "m07_o5",
+          "action": "collect_then_arm_and_wait",
+          "item": "Краска",
+          "kind": 1,
+          "trap_slot": 1,
+          "room": "entrance",
+          "label": "Красочный след",
+          "floor": 0
         }
       ],
-      "new_mechanic": "Небольшая предметная головоломка",
-      "neighbor_behavior": "Видит изменения в столовой и идёт проверить кладовую",
-      "bonus": "Правильная раскладка с первой попытки",
-      "par_seconds": 360,
-      "time_limit_is_failure": false,
-      "unlock_after": "m06",
-      "implementation_status": "designed_not_implemented"
+      "completion_rule": "Запустить все пакости, дождаться реакций соседа и выйти через выход на первом этаже (Godot floor_id = 0)"
     },
     {
       "id": "m08",
       "chapter": 2,
       "title": "Завтрак по цепочке",
-      "rooms": [
+      "floor": 0,
+      "goal": "Соедини шесть утренних пакостей",
+      "bonus": "Три реакции без разрыва комбо",
+      "bonus_rule": "combo3",
+      "par_seconds": 338,
+      "difficulty": 1,
+      "room_ids": [
+        "entrance",
         "kitchen",
-        "dining",
         "living"
       ],
-      "items": [
-        "paper_flag",
-        "squeaker",
-        "culinary_foam"
-      ],
-      "objectives": [
+      "tasks": [
         {
           "id": "m08_o1",
-          "text": "Подготовить три связанные пакости",
-          "requires": []
+          "action": "collect_then_arm_and_wait",
+          "item": "Пена",
+          "kind": 5,
+          "trap_slot": 7,
+          "room": "kitchen",
+          "label": "Пенный капучино",
+          "floor": 0
         },
         {
           "id": "m08_o2",
-          "text": "Сохранить соседу доступ к столу",
-          "requires": [
-            "m08_o1"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Пена",
+          "kind": 5,
+          "trap_slot": 4,
+          "room": "living",
+          "label": "Пенный стакан",
+          "floor": 0
         },
         {
           "id": "m08_o3",
-          "text": "Снять серию реакций и выйти через прихожую",
-          "requires": [
-            "m08_o2"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Пищалка",
+          "kind": 4,
+          "trap_slot": 2,
+          "room": "living",
+          "label": "Пищалка под креслом",
+          "floor": 0
+        },
+        {
+          "id": "m08_o4",
+          "action": "collect_then_arm_and_wait",
+          "item": "Игрушка",
+          "kind": 6,
+          "trap_slot": 0,
+          "room": "entrance",
+          "label": "Игрушечный флажок",
+          "floor": 0
+        },
+        {
+          "id": "m08_o5",
+          "action": "collect_then_arm_and_wait",
+          "item": "Мыло",
+          "kind": 2,
+          "trap_slot": 6,
+          "room": "living",
+          "label": "Мыльная дорожка",
+          "floor": 0
+        },
+        {
+          "id": "m08_o6",
+          "action": "collect_then_arm_and_wait",
+          "item": "Банан",
+          "kind": 0,
+          "trap_slot": 5,
+          "room": "living",
+          "label": "Кожура у ковра",
+          "floor": 0
         }
       ],
-      "new_mechanic": "Цепочка с обязательным свободным маршрутом",
-      "neighbor_behavior": "Завтрак - столовая - любимое кресло",
-      "bonus": "Три реакции без разрыва комбо",
-      "par_seconds": 420,
-      "time_limit_is_failure": false,
-      "unlock_after": "m07",
-      "implementation_status": "designed_not_implemented"
+      "completion_rule": "Запустить все пакости, дождаться реакций соседа и выйти через выход на первом этаже (Godot floor_id = 0)"
     },
     {
       "id": "m09",
       "chapter": 3,
       "title": "Король пены",
-      "rooms": [
-        "laundry",
-        "bathroom"
+      "floor": 1,
+      "goal": "Устрой пенную уборку наверху",
+      "bonus": "Не пользоваться подсветкой маршрута",
+      "bonus_rule": "clean",
+      "par_seconds": 352,
+      "difficulty": 1,
+      "room_ids": [
+        "bedroom",
+        "study",
+        "upper_living"
       ],
-      "items": [
-        "bubble_solution",
-        "foam_capsule"
-      ],
-      "objectives": [
+      "tasks": [
         {
           "id": "m09_o1",
-          "text": "Найти игровой пенный состав",
-          "requires": []
+          "action": "collect_then_arm_and_wait",
+          "item": "Пена",
+          "kind": 5,
+          "trap_slot": 2,
+          "room": "upper_living",
+          "label": "Пузырьки в ванной",
+          "floor": 1
         },
         {
           "id": "m09_o2",
-          "text": "Подготовить ванну до прихода соседа",
-          "requires": [
-            "m09_o1"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Пена",
+          "kind": 5,
+          "trap_slot": 0,
+          "room": "bedroom",
+          "label": "Пена для уборки",
+          "floor": 1
         },
         {
           "id": "m09_o3",
-          "text": "Скрыться за ширмой",
-          "requires": [
-            "m09_o2"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Мыло",
+          "kind": 2,
+          "trap_slot": 7,
+          "room": "study",
+          "label": "Пенная ловушка",
+          "floor": 1
+        },
+        {
+          "id": "m09_o4",
+          "action": "collect_then_arm_and_wait",
+          "item": "Мыло",
+          "kind": 2,
+          "trap_slot": 4,
+          "room": "upper_living",
+          "label": "Мыльная дорожка",
+          "floor": 1
+        },
+        {
+          "id": "m09_o5",
+          "action": "collect_then_arm_and_wait",
+          "item": "Мыло",
+          "kind": 2,
+          "trap_slot": 1,
+          "room": "bedroom",
+          "label": "Мыло у двери",
+          "floor": 1
         }
       ],
-      "new_mechanic": "Первое полноценное задание на втором этаже",
-      "neighbor_behavior": "Главная лестница - ванная - спальня",
-      "bonus": "Не пользоваться подсветкой маршрута",
-      "par_seconds": 360,
-      "time_limit_is_failure": false,
-      "unlock_after": "m08",
-      "implementation_status": "designed_not_implemented"
+      "completion_rule": "Запустить все пакости, дождаться реакций соседа и выйти через выход на первом этаже (Godot floor_id = 0)"
     },
     {
       "id": "m10",
       "chapter": 3,
       "title": "Большая стирка",
-      "rooms": [
-        "laundry",
-        "bedroom"
+      "floor": 1,
+      "goal": "Перепутай ярлыки и бельё",
+      "bonus": "Развесить всё без сброса пазла",
+      "bonus_rule": "fast",
+      "par_seconds": 366,
+      "difficulty": 1,
+      "room_ids": [
+        "bedroom",
+        "study",
+        "upper_living"
       ],
-      "items": [
-        "color_clips",
-        "laundry_labels"
-      ],
-      "objectives": [
+      "tasks": [
         {
           "id": "m10_o1",
-          "text": "Развесить смешные ярлыки",
-          "requires": []
+          "action": "collect_then_arm_and_wait",
+          "item": "Бумажная шутка",
+          "kind": 7,
+          "trap_slot": 4,
+          "room": "upper_living",
+          "label": "Подмена карточек",
+          "floor": 1
         },
         {
           "id": "m10_o2",
-          "text": "Собрать цветную последовательность прищепок",
-          "requires": [
-            "m10_o1"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Бумажная шутка",
+          "kind": 7,
+          "trap_slot": 7,
+          "room": "study",
+          "label": "Шуточная наклейка",
+          "floor": 1
         },
         {
           "id": "m10_o3",
-          "text": "Дождаться, пока сосед проверит бельё",
-          "requires": [
-            "m10_o2"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Пена",
+          "kind": 5,
+          "trap_slot": 0,
+          "room": "bedroom",
+          "label": "Пена для уборки",
+          "floor": 1
+        },
+        {
+          "id": "m10_o4",
+          "action": "collect_then_arm_and_wait",
+          "item": "Конфетти",
+          "kind": 3,
+          "trap_slot": 2,
+          "room": "upper_living",
+          "label": "Конфетти у порога",
+          "floor": 1
+        },
+        {
+          "id": "m10_o5",
+          "action": "collect_then_arm_and_wait",
+          "item": "Пена",
+          "kind": 5,
+          "trap_slot": 6,
+          "room": "upper_living",
+          "label": "Пенный стакан",
+          "floor": 1
         }
       ],
-      "new_mechanic": "Пазл по визуальной подсказке",
-      "neighbor_behavior": "После каждой проверки меняет порядок обхода",
-      "bonus": "Развесить всё без сброса пазла",
-      "par_seconds": 360,
-      "time_limit_is_failure": false,
-      "unlock_after": "m09",
-      "implementation_status": "designed_not_implemented"
+      "completion_rule": "Запустить все пакости, дождаться реакций соседа и выйти через выход на первом этаже (Godot floor_id = 0)"
     },
     {
       "id": "m11",
       "chapter": 3,
       "title": "Тапки не на месте",
-      "rooms": [
+      "floor": 1,
+      "goal": "Запутай соседа звуками и следами",
+      "bonus": "Не вызвать проверку пропавшего предмета",
+      "bonus_rule": "clean",
+      "par_seconds": 380,
+      "difficulty": 2,
+      "room_ids": [
         "bedroom",
-        "gallery",
-        "bathroom"
+        "study",
+        "upper_living"
       ],
-      "items": [
-        "slippers",
-        "squeaker"
-      ],
-      "objectives": [
+      "tasks": [
         {
           "id": "m11_o1",
-          "text": "Найти тапки",
-          "requires": []
+          "action": "collect_then_arm_and_wait",
+          "item": "Пищалка",
+          "kind": 4,
+          "trap_slot": 0,
+          "room": "bedroom",
+          "label": "Шумная подушка",
+          "floor": 1
         },
         {
           "id": "m11_o2",
-          "text": "Подготовить шуточную пищалку",
-          "requires": [
-            "m11_o1"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Банан",
+          "kind": 0,
+          "trap_slot": 4,
+          "room": "upper_living",
+          "label": "Скользкий сюрприз",
+          "floor": 1
         },
         {
           "id": "m11_o3",
-          "text": "Вернуть тапки до возвращения соседа",
-          "requires": [
-            "m11_o2"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Пищалка",
+          "kind": 4,
+          "trap_slot": 7,
+          "room": "study",
+          "label": "Музыкальное кресло",
+          "floor": 1
+        },
+        {
+          "id": "m11_o4",
+          "action": "collect_then_arm_and_wait",
+          "item": "Банан",
+          "kind": 0,
+          "trap_slot": 2,
+          "room": "upper_living",
+          "label": "Кожура на обратном пути",
+          "floor": 1
+        },
+        {
+          "id": "m11_o5",
+          "action": "collect_then_arm_and_wait",
+          "item": "Конфетти",
+          "kind": 3,
+          "trap_slot": 5,
+          "room": "upper_living",
+          "label": "Бумажный сюрприз",
+          "floor": 1
+        },
+        {
+          "id": "m11_o6",
+          "action": "collect_then_arm_and_wait",
+          "item": "Краска",
+          "kind": 1,
+          "trap_slot": 1,
+          "room": "bedroom",
+          "label": "Смываемый отпечаток",
+          "floor": 1
         }
       ],
-      "new_mechanic": "Вернуть предмет в исходное место после изменения",
-      "neighbor_behavior": "Проверяет пропажу и ускоряет обход",
-      "bonus": "Не вызвать проверку пропавшего предмета",
-      "par_seconds": 390,
-      "time_limit_is_failure": false,
-      "unlock_after": "m10",
-      "implementation_status": "designed_not_implemented"
+      "completion_rule": "Запустить все пакости, дождаться реакций соседа и выйти через выход на первом этаже (Godot floor_id = 0)"
     },
     {
       "id": "m12",
       "chapter": 3,
       "title": "Генеральная пакость",
-      "rooms": [
-        "bathroom",
-        "laundry",
-        "gallery",
-        "bedroom"
+      "floor": 1,
+      "goal": "Свяжи шесть розыгрышей наверху",
+      "bonus": "Закончить без погони на лестнице",
+      "bonus_rule": "combo3",
+      "par_seconds": 394,
+      "difficulty": 2,
+      "room_ids": [
+        "bedroom",
+        "study",
+        "upper_living"
       ],
-      "items": [
-        "foam_capsule",
-        "laundry_labels",
-        "squeaker"
-      ],
-      "objectives": [
+      "tasks": [
         {
           "id": "m12_o1",
-          "text": "Подготовить ванную",
-          "requires": []
+          "action": "collect_then_arm_and_wait",
+          "item": "Пена",
+          "kind": 5,
+          "trap_slot": 7,
+          "room": "study",
+          "label": "Пузырьки в ванной",
+          "floor": 1
         },
         {
           "id": "m12_o2",
-          "text": "Завершить стирку-сюрприз",
-          "requires": [
-            "m12_o1"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Мыло",
+          "kind": 2,
+          "trap_slot": 2,
+          "room": "upper_living",
+          "label": "Пенная ловушка",
+          "floor": 1
         },
         {
           "id": "m12_o3",
-          "text": "Оставить тапки в спальне",
-          "requires": [
-            "m12_o2"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Бумажная шутка",
+          "kind": 7,
+          "trap_slot": 4,
+          "room": "upper_living",
+          "label": "Подмена карточек",
+          "floor": 1
         },
         {
           "id": "m12_o4",
-          "text": "Уйти по второму пути",
-          "requires": [
-            "m12_o3"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Пищалка",
+          "kind": 4,
+          "trap_slot": 0,
+          "room": "bedroom",
+          "label": "Шумная подушка",
+          "floor": 1
+        },
+        {
+          "id": "m12_o5",
+          "action": "collect_then_arm_and_wait",
+          "item": "Краска",
+          "kind": 1,
+          "trap_slot": 3,
+          "room": "upper_living",
+          "label": "Смываемый отпечаток",
+          "floor": 1
+        },
+        {
+          "id": "m12_o6",
+          "action": "collect_then_arm_and_wait",
+          "item": "Конфетти",
+          "kind": 3,
+          "trap_slot": 5,
+          "room": "upper_living",
+          "label": "Праздничный хлопок",
+          "floor": 1
         }
       ],
-      "new_mechanic": "Четыре зоны и альтернативный путь между этажами",
-      "neighbor_behavior": "После первой реакции избегает главной лестницы",
-      "bonus": "Закончить без погони на лестнице",
-      "par_seconds": 480,
-      "time_limit_is_failure": false,
-      "unlock_after": "m11",
-      "implementation_status": "designed_not_implemented"
+      "completion_rule": "Запустить все пакости, дождаться реакций соседа и выйти через выход на первом этаже (Godot floor_id = 0)"
     },
     {
       "id": "m13",
       "chapter": 4,
       "title": "Сигнал из гаража",
-      "rooms": [
-        "garage",
-        "workshop",
-        "garden"
+      "floor": 0,
+      "goal": "Размести игрушечные сигналы",
+      "bonus": "Машинка не должна застрять",
+      "bonus_rule": "fast",
+      "par_seconds": 408,
+      "difficulty": 2,
+      "room_ids": [
+        "entrance",
+        "kitchen",
+        "living"
       ],
-      "items": [
-        "toy_car",
-        "remote"
-      ],
-      "objectives": [
+      "tasks": [
         {
           "id": "m13_o1",
-          "text": "Найти игрушечную машинку",
-          "requires": []
+          "action": "collect_then_arm_and_wait",
+          "item": "Игрушка",
+          "kind": 6,
+          "trap_slot": 0,
+          "room": "entrance",
+          "label": "Игрушечная машинка",
+          "floor": 0
         },
         {
           "id": "m13_o2",
-          "text": "Проложить ей маршрут через гараж",
-          "requires": [
-            "m13_o1"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Игрушка",
+          "kind": 6,
+          "trap_slot": 2,
+          "room": "living",
+          "label": "Игрушечный сигнал",
+          "floor": 0
         },
         {
           "id": "m13_o3",
-          "text": "Включить отвлекающий сигнал из двора",
-          "requires": [
-            "m13_o2"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Пищалка",
+          "kind": 4,
+          "trap_slot": 4,
+          "room": "living",
+          "label": "Звуковой сигнал",
+          "floor": 0
+        },
+        {
+          "id": "m13_o4",
+          "action": "collect_then_arm_and_wait",
+          "item": "Игрушка",
+          "kind": 6,
+          "trap_slot": 7,
+          "room": "kitchen",
+          "label": "Игрушечный флажок",
+          "floor": 0
+        },
+        {
+          "id": "m13_o5",
+          "action": "collect_then_arm_and_wait",
+          "item": "Бумажная шутка",
+          "kind": 7,
+          "trap_slot": 1,
+          "room": "entrance",
+          "label": "Шуточная наклейка",
+          "floor": 0
+        },
+        {
+          "id": "m13_o6",
+          "action": "collect_then_arm_and_wait",
+          "item": "Мыло",
+          "kind": 2,
+          "trap_slot": 3,
+          "room": "living",
+          "label": "Мыло у двери",
+          "floor": 0
         }
       ],
-      "new_mechanic": "Движущийся источник шума",
-      "neighbor_behavior": "Исследует последнюю видимую позицию машинки",
-      "bonus": "Машинка не должна застрять",
-      "par_seconds": 420,
-      "time_limit_is_failure": false,
-      "unlock_after": "m12",
-      "implementation_status": "designed_not_implemented"
+      "completion_rule": "Запустить все пакости, дождаться реакций соседа и выйти через выход на первом этаже (Godot floor_id = 0)"
     },
     {
       "id": "m14",
       "chapter": 4,
       "title": "Пернатый концерт",
-      "rooms": [
-        "garden",
-        "study"
+      "floor": 1,
+      "goal": "Заставь соседа искать игрушечную птицу",
+      "bonus": "Не попадать в поле зрения из окна",
+      "bonus_rule": "clean",
+      "par_seconds": 422,
+      "difficulty": 2,
+      "room_ids": [
+        "bedroom",
+        "study",
+        "upper_living"
       ],
-      "items": [
-        "toy_bird",
-        "sound_module"
-      ],
-      "objectives": [
+      "tasks": [
         {
           "id": "m14_o1",
-          "text": "Собрать игрушечную птицу",
-          "requires": []
+          "action": "collect_then_arm_and_wait",
+          "item": "Игрушка",
+          "kind": 6,
+          "trap_slot": 7,
+          "room": "study",
+          "label": "Игрушечная птица",
+          "floor": 1
         },
         {
           "id": "m14_o2",
-          "text": "Разместить её у окна кабинета",
-          "requires": [
-            "m14_o1"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Пищалка",
+          "kind": 4,
+          "trap_slot": 4,
+          "room": "upper_living",
+          "label": "Звуковой сигнал",
+          "floor": 1
         },
         {
           "id": "m14_o3",
-          "text": "Включить концерт во время чтения",
-          "requires": [
-            "m14_o2"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Игрушка",
+          "kind": 6,
+          "trap_slot": 2,
+          "room": "upper_living",
+          "label": "Игрушечный сигнал",
+          "floor": 1
+        },
+        {
+          "id": "m14_o4",
+          "action": "collect_then_arm_and_wait",
+          "item": "Пена",
+          "kind": 5,
+          "trap_slot": 0,
+          "room": "bedroom",
+          "label": "Пенный стакан",
+          "floor": 1
+        },
+        {
+          "id": "m14_o5",
+          "action": "collect_then_arm_and_wait",
+          "item": "Конфетти",
+          "kind": 3,
+          "trap_slot": 6,
+          "room": "upper_living",
+          "label": "Бумажный сюрприз",
+          "floor": 1
+        },
+        {
+          "id": "m14_o6",
+          "action": "collect_then_arm_and_wait",
+          "item": "Мыло",
+          "kind": 2,
+          "trap_slot": 5,
+          "room": "upper_living",
+          "label": "Мыльная дорожка",
+          "floor": 1
         }
       ],
-      "new_mechanic": "Отвлечение через окно между зонами",
-      "neighbor_behavior": "Сначала смотрит в окно, затем выходит во двор",
-      "bonus": "Не попадать в поле зрения из окна",
-      "par_seconds": 420,
-      "time_limit_is_failure": false,
-      "unlock_after": "m13",
-      "implementation_status": "designed_not_implemented"
+      "completion_rule": "Запустить все пакости, дождаться реакций соседа и выйти через выход на первом этаже (Godot floor_id = 0)"
     },
     {
       "id": "m15",
       "chapter": 4,
       "title": "Живой портрет",
-      "rooms": [
-        "library",
+      "floor": 1,
+      "goal": "Подготовь забавные портреты",
+      "bonus": "Одна точная активация",
+      "bonus_rule": "clean",
+      "par_seconds": 436,
+      "difficulty": 2,
+      "room_ids": [
+        "bedroom",
         "study",
-        "gallery"
+        "upper_living"
       ],
-      "items": [
-        "paper_eyes",
-        "thread"
-      ],
-      "objectives": [
+      "tasks": [
         {
           "id": "m15_o1",
-          "text": "Найти бумажные глаза",
-          "requires": []
+          "action": "collect_then_arm_and_wait",
+          "item": "Бумажная шутка",
+          "kind": 7,
+          "trap_slot": 2,
+          "room": "upper_living",
+          "label": "Глаза на портрете",
+          "floor": 1
         },
         {
           "id": "m15_o2",
-          "text": "Подготовить подвижный портрет",
-          "requires": [
-            "m15_o1"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Бумажная шутка",
+          "kind": 7,
+          "trap_slot": 0,
+          "room": "bedroom",
+          "label": "Бумажные тени",
+          "floor": 1
         },
         {
           "id": "m15_o3",
-          "text": "Запустить шутку во время прохода соседа",
-          "requires": [
-            "m15_o2"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Бумажная шутка",
+          "kind": 7,
+          "trap_slot": 7,
+          "room": "study",
+          "label": "Шуточная наклейка",
+          "floor": 1
+        },
+        {
+          "id": "m15_o4",
+          "action": "collect_then_arm_and_wait",
+          "item": "Бумажная шутка",
+          "kind": 7,
+          "trap_slot": 4,
+          "room": "upper_living",
+          "label": "Подмена карточек",
+          "floor": 1
+        },
+        {
+          "id": "m15_o5",
+          "action": "collect_then_arm_and_wait",
+          "item": "Краска",
+          "kind": 1,
+          "trap_slot": 1,
+          "room": "bedroom",
+          "label": "Смываемый отпечаток",
+          "floor": 1
+        },
+        {
+          "id": "m15_o6",
+          "action": "collect_then_arm_and_wait",
+          "item": "Конфетти",
+          "kind": 3,
+          "trap_slot": 5,
+          "room": "upper_living",
+          "label": "Конфетти у порога",
+          "floor": 1
         }
       ],
-      "new_mechanic": "Дистанционное взаимодействие с декорацией",
-      "neighbor_behavior": "Сосед запоминает подозрительный портрет",
-      "bonus": "Одна точная активация",
-      "par_seconds": 420,
-      "time_limit_is_failure": false,
-      "unlock_after": "m14",
-      "implementation_status": "designed_not_implemented"
+      "completion_rule": "Запустить все пакости, дождаться реакций соседа и выйти через выход на первом этаже (Godot floor_id = 0)"
     },
     {
       "id": "m16",
       "chapter": 4,
       "title": "Хобби под контролем",
-      "rooms": [
-        "garage",
+      "floor": 1,
+      "goal": "Соедини шумы и бумажные обманки",
+      "bonus": "Ни одного лишнего отвлечения",
+      "bonus_rule": "combo3",
+      "par_seconds": 450,
+      "difficulty": 3,
+      "room_ids": [
+        "bedroom",
         "study",
-        "library",
-        "garden"
+        "upper_living"
       ],
-      "items": [
-        "toy_car",
-        "toy_bird",
-        "paper_eyes"
-      ],
-      "objectives": [
+      "tasks": [
         {
           "id": "m16_o1",
-          "text": "Перенаправить обход через гараж",
-          "requires": []
+          "action": "collect_then_arm_and_wait",
+          "item": "Игрушка",
+          "kind": 6,
+          "trap_slot": 4,
+          "room": "upper_living",
+          "label": "Игрушечная машинка",
+          "floor": 1
         },
         {
           "id": "m16_o2",
-          "text": "Активировать портрет",
-          "requires": [
-            "m16_o1"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Игрушка",
+          "kind": 6,
+          "trap_slot": 7,
+          "room": "study",
+          "label": "Игрушечная птица",
+          "floor": 1
         },
         {
           "id": "m16_o3",
-          "text": "Завершить птичий концерт",
-          "requires": [
-            "m16_o2"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Бумажная шутка",
+          "kind": 7,
+          "trap_slot": 0,
+          "room": "bedroom",
+          "label": "Глаза на портрете",
+          "floor": 1
         },
         {
           "id": "m16_o4",
-          "text": "Незаметно вернуться к выходу",
-          "requires": [
-            "m16_o3"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Пищалка",
+          "kind": 4,
+          "trap_slot": 2,
+          "room": "upper_living",
+          "label": "Звуковой сигнал",
+          "floor": 1
+        },
+        {
+          "id": "m16_o5",
+          "action": "collect_then_arm_and_wait",
+          "item": "Мыло",
+          "kind": 2,
+          "trap_slot": 6,
+          "room": "upper_living",
+          "label": "Мыльная дорожка",
+          "floor": 1
+        },
+        {
+          "id": "m16_o6",
+          "action": "collect_then_arm_and_wait",
+          "item": "Краска",
+          "kind": 1,
+          "trap_slot": 3,
+          "room": "upper_living",
+          "label": "Смываемый отпечаток",
+          "floor": 1
+        },
+        {
+          "id": "m16_o7",
+          "action": "collect_then_arm_and_wait",
+          "item": "Конфетти",
+          "kind": 3,
+          "trap_slot": 1,
+          "room": "bedroom",
+          "label": "Бумажный сюрприз",
+          "floor": 1
         }
       ],
-      "new_mechanic": "Три отвлечения с разными областями слышимости",
-      "neighbor_behavior": "Реагирует на сильнейший недавний сигнал",
-      "bonus": "Ни одного лишнего отвлечения",
-      "par_seconds": 540,
-      "time_limit_is_failure": false,
-      "unlock_after": "m15",
-      "implementation_status": "designed_not_implemented"
+      "completion_rule": "Запустить все пакости, дождаться реакций соседа и выйти через выход на первом этаже (Godot floor_id = 0)"
     },
     {
       "id": "m17",
       "chapter": 5,
       "title": "Подарок с характером",
-      "rooms": [
-        "pantry",
-        "dining"
+      "floor": 0,
+      "goal": "Подготовь подарки и сюрпризы",
+      "bonus": "Не уронить коробку при переносе",
+      "bonus_rule": "clean",
+      "par_seconds": 464,
+      "difficulty": 3,
+      "room_ids": [
+        "entrance",
+        "kitchen",
+        "living"
       ],
-      "items": [
-        "gift_box",
-        "confetti"
-      ],
-      "objectives": [
+      "tasks": [
         {
           "id": "m17_o1",
-          "text": "Собрать подарочную коробку",
-          "requires": []
+          "action": "collect_then_arm_and_wait",
+          "item": "Конфетти",
+          "kind": 3,
+          "trap_slot": 0,
+          "room": "entrance",
+          "label": "Сюрприз в подарке",
+          "floor": 0
         },
         {
           "id": "m17_o2",
-          "text": "Спрятать конфетти внутри",
-          "requires": [
-            "m17_o1"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Конфетти",
+          "kind": 3,
+          "trap_slot": 4,
+          "room": "living",
+          "label": "Праздничный хлопок",
+          "floor": 0
         },
         {
           "id": "m17_o3",
-          "text": "Поставить подарок на свободное место",
-          "requires": [
-            "m17_o2"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Конфетти",
+          "kind": 3,
+          "trap_slot": 7,
+          "room": "kitchen",
+          "label": "Конфетти у порога",
+          "floor": 0
+        },
+        {
+          "id": "m17_o4",
+          "action": "collect_then_arm_and_wait",
+          "item": "Бумажная шутка",
+          "kind": 7,
+          "trap_slot": 2,
+          "room": "living",
+          "label": "Забавные карточки",
+          "floor": 0
+        },
+        {
+          "id": "m17_o5",
+          "action": "collect_then_arm_and_wait",
+          "item": "Пена",
+          "kind": 5,
+          "trap_slot": 5,
+          "room": "living",
+          "label": "Пенный стакан",
+          "floor": 0
+        },
+        {
+          "id": "m17_o6",
+          "action": "collect_then_arm_and_wait",
+          "item": "Банан",
+          "kind": 0,
+          "trap_slot": 1,
+          "room": "entrance",
+          "label": "Кожура у ковра",
+          "floor": 0
+        },
+        {
+          "id": "m17_o7",
+          "action": "collect_then_arm_and_wait",
+          "item": "Краска",
+          "kind": 1,
+          "trap_slot": 3,
+          "room": "living",
+          "label": "Красочный след",
+          "floor": 0
         }
       ],
-      "new_mechanic": "Комбинация двух предметов в инвентаре",
-      "neighbor_behavior": "Открывает подарок только после сервировки",
-      "bonus": "Не уронить коробку при переносе",
-      "par_seconds": 420,
-      "time_limit_is_failure": false,
-      "unlock_after": "m16",
-      "implementation_status": "designed_not_implemented"
+      "completion_rule": "Запустить все пакости, дождаться реакций соседа и выйти через выход на первом этаже (Godot floor_id = 0)"
     },
     {
       "id": "m18",
       "chapter": 5,
       "title": "Оркестр стульев",
-      "rooms": [
-        "dining",
-        "workshop"
+      "floor": 0,
+      "goal": "Устрой музыкальный переполох",
+      "bonus": "Выбрать правильный стул сразу",
+      "bonus_rule": "combo3",
+      "par_seconds": 478,
+      "difficulty": 3,
+      "room_ids": [
+        "entrance",
+        "kitchen",
+        "living"
       ],
-      "items": [
-        "squeaker_set",
-        "seat_labels"
-      ],
-      "objectives": [
+      "tasks": [
         {
           "id": "m18_o1",
-          "text": "Найти набор пищалок",
-          "requires": []
+          "action": "collect_then_arm_and_wait",
+          "item": "Пищалка",
+          "kind": 4,
+          "trap_slot": 7,
+          "room": "kitchen",
+          "label": "Пищалки на стульях",
+          "floor": 0
         },
         {
           "id": "m18_o2",
-          "text": "Определить любимый стул по метке",
-          "requires": [
-            "m18_o1"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Пищалка",
+          "kind": 4,
+          "trap_slot": 2,
+          "room": "living",
+          "label": "Музыкальное кресло",
+          "floor": 0
         },
         {
           "id": "m18_o3",
-          "text": "Подготовить нужный стул",
-          "requires": [
-            "m18_o2"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Пищалка",
+          "kind": 4,
+          "trap_slot": 4,
+          "room": "living",
+          "label": "Шумная подушка",
+          "floor": 0
+        },
+        {
+          "id": "m18_o4",
+          "action": "collect_then_arm_and_wait",
+          "item": "Пищалка",
+          "kind": 4,
+          "trap_slot": 0,
+          "room": "entrance",
+          "label": "Звуковой сигнал",
+          "floor": 0
+        },
+        {
+          "id": "m18_o5",
+          "action": "collect_then_arm_and_wait",
+          "item": "Пищалка",
+          "kind": 4,
+          "trap_slot": 3,
+          "room": "living",
+          "label": "Пищалка под креслом",
+          "floor": 0
+        },
+        {
+          "id": "m18_o6",
+          "action": "collect_then_arm_and_wait",
+          "item": "Бумажная шутка",
+          "kind": 7,
+          "trap_slot": 5,
+          "room": "living",
+          "label": "Забавные карточки",
+          "floor": 0
+        },
+        {
+          "id": "m18_o7",
+          "action": "collect_then_arm_and_wait",
+          "item": "Бумажная шутка",
+          "kind": 7,
+          "trap_slot": 6,
+          "room": "living",
+          "label": "Подмена карточек",
+          "floor": 0
         }
       ],
-      "new_mechanic": "Наблюдение за привычками вместо случайного выбора",
-      "neighbor_behavior": "Меняет стул при заметной перестановке",
-      "bonus": "Выбрать правильный стул сразу",
-      "par_seconds": 420,
-      "time_limit_is_failure": false,
-      "unlock_after": "m17",
-      "implementation_status": "designed_not_implemented"
+      "completion_rule": "Запустить все пакости, дождаться реакций соседа и выйти через выход на первом этаже (Godot floor_id = 0)"
     },
     {
       "id": "m19",
       "chapter": 5,
       "title": "Театр теней",
-      "rooms": [
-        "living",
-        "library",
-        "gallery"
+      "floor": 1,
+      "goal": "Создай театр бумажных теней",
+      "bonus": "Совпасть с силуэтом с первой настройки",
+      "bonus_rule": "fast",
+      "par_seconds": 492,
+      "difficulty": 3,
+      "room_ids": [
+        "bedroom",
+        "study",
+        "upper_living"
       ],
-      "items": [
-        "paper_cutouts",
-        "lamp_shade"
-      ],
-      "objectives": [
+      "tasks": [
         {
           "id": "m19_o1",
-          "text": "Найти трафареты",
-          "requires": []
+          "action": "collect_then_arm_and_wait",
+          "item": "Бумажная шутка",
+          "kind": 7,
+          "trap_slot": 0,
+          "room": "bedroom",
+          "label": "Бумажные тени",
+          "floor": 1
         },
         {
           "id": "m19_o2",
-          "text": "Подготовить безопасную настольную лампу",
-          "requires": [
-            "m19_o1"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Бумажная шутка",
+          "kind": 7,
+          "trap_slot": 2,
+          "room": "upper_living",
+          "label": "Глаза на портрете",
+          "floor": 1
         },
         {
           "id": "m19_o3",
-          "text": "Показать смешную тень на стене",
-          "requires": [
-            "m19_o2"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Бумажная шутка",
+          "kind": 7,
+          "trap_slot": 4,
+          "room": "upper_living",
+          "label": "Шуточная наклейка",
+          "floor": 1
+        },
+        {
+          "id": "m19_o4",
+          "action": "collect_then_arm_and_wait",
+          "item": "Краска",
+          "kind": 1,
+          "trap_slot": 7,
+          "room": "study",
+          "label": "Красочный след",
+          "floor": 1
+        },
+        {
+          "id": "m19_o5",
+          "action": "collect_then_arm_and_wait",
+          "item": "Игрушка",
+          "kind": 6,
+          "trap_slot": 1,
+          "room": "bedroom",
+          "label": "Игрушечная птица",
+          "floor": 1
+        },
+        {
+          "id": "m19_o6",
+          "action": "collect_then_arm_and_wait",
+          "item": "Конфетти",
+          "kind": 3,
+          "trap_slot": 3,
+          "room": "upper_living",
+          "label": "Бумажный сюрприз",
+          "floor": 1
+        },
+        {
+          "id": "m19_o7",
+          "action": "collect_then_arm_and_wait",
+          "item": "Игрушка",
+          "kind": 6,
+          "trap_slot": 5,
+          "room": "upper_living",
+          "label": "Игрушечный флажок",
+          "floor": 1
         }
       ],
-      "new_mechanic": "Пазл с направлением света",
-      "neighbor_behavior": "Поворачивается к тени и проверяет источник",
-      "bonus": "Совпасть с силуэтом с первой настройки",
-      "par_seconds": 480,
-      "time_limit_is_failure": false,
-      "unlock_after": "m18",
-      "implementation_status": "designed_not_implemented"
+      "completion_rule": "Запустить все пакости, дождаться реакций соседа и выйти через выход на первом этаже (Godot floor_id = 0)"
     },
     {
       "id": "m20",
       "chapter": 5,
       "title": "Репетиция праздника",
-      "rooms": [
-        "dining",
-        "living",
-        "garden",
-        "foyer"
+      "floor": 0,
+      "goal": "Устрой праздник из семи пакостей",
+      "bonus": "Избежать обоих наблюдателей",
+      "bonus_rule": "combo3",
+      "par_seconds": 506,
+      "difficulty": 3,
+      "room_ids": [
+        "entrance",
+        "kitchen",
+        "living"
       ],
-      "items": [
-        "gift_box",
-        "confetti",
-        "paper_cutouts"
-      ],
-      "objectives": [
+      "tasks": [
         {
           "id": "m20_o1",
-          "text": "Подготовить подарок",
-          "requires": []
+          "action": "collect_then_arm_and_wait",
+          "item": "Конфетти",
+          "kind": 3,
+          "trap_slot": 7,
+          "room": "kitchen",
+          "label": "Сюрприз в подарке",
+          "floor": 0
         },
         {
           "id": "m20_o2",
-          "text": "Настроить театр теней",
-          "requires": [
-            "m20_o1"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Конфетти",
+          "kind": 3,
+          "trap_slot": 4,
+          "room": "living",
+          "label": "Праздничный хлопок",
+          "floor": 0
         },
         {
           "id": "m20_o3",
-          "text": "Не блокировать вход гостю",
-          "requires": [
-            "m20_o2"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Пищалка",
+          "kind": 4,
+          "trap_slot": 2,
+          "room": "living",
+          "label": "Пищалки на стульях",
+          "floor": 0
         },
         {
           "id": "m20_o4",
-          "text": "Провести цепочку реакций",
-          "requires": [
-            "m20_o3"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Конфетти",
+          "kind": 3,
+          "trap_slot": 0,
+          "room": "entrance",
+          "label": "Конфетти у порога",
+          "floor": 0
+        },
+        {
+          "id": "m20_o5",
+          "action": "collect_then_arm_and_wait",
+          "item": "Пищалка",
+          "kind": 4,
+          "trap_slot": 6,
+          "room": "living",
+          "label": "Пищалка под креслом",
+          "floor": 0
+        },
+        {
+          "id": "m20_o6",
+          "action": "collect_then_arm_and_wait",
+          "item": "Игрушка",
+          "kind": 6,
+          "trap_slot": 5,
+          "room": "living",
+          "label": "Игрушечный флажок",
+          "floor": 0
+        },
+        {
+          "id": "m20_o7",
+          "action": "collect_then_arm_and_wait",
+          "item": "Бумажная шутка",
+          "kind": 7,
+          "trap_slot": 3,
+          "room": "living",
+          "label": "Забавные карточки",
+          "floor": 0
         }
       ],
-      "new_mechanic": "Появление второго наблюдателя в доме",
-      "neighbor_behavior": "Гость патрулирует прихожую отдельно от соседа",
-      "bonus": "Избежать обоих наблюдателей",
-      "par_seconds": 600,
-      "time_limit_is_failure": false,
-      "unlock_after": "m19",
-      "implementation_status": "designed_not_implemented"
+      "completion_rule": "Запустить все пакости, дождаться реакций соседа и выйти через выход на первом этаже (Godot floor_id = 0)"
     },
     {
       "id": "m21",
       "chapter": 6,
       "title": "Сосед настороже",
-      "rooms": [
-        "foyer",
-        "gallery",
-        "study"
+      "floor": 1,
+      "goal": "Обойди настороженного соседа",
+      "bonus": "Не использовать старое укрытие",
+      "bonus_rule": "clean",
+      "par_seconds": 520,
+      "difficulty": 4,
+      "room_ids": [
+        "bedroom",
+        "study",
+        "upper_living"
       ],
-      "items": [
-        "spare_key",
-        "toy_bird"
-      ],
-      "objectives": [
+      "tasks": [
         {
           "id": "m21_o1",
-          "text": "Изучить изменённый маршрут",
-          "requires": []
+          "action": "collect_then_arm_and_wait",
+          "item": "Банан",
+          "kind": 0,
+          "trap_slot": 2,
+          "room": "upper_living",
+          "label": "Кожура на обратном пути",
+          "floor": 1
         },
         {
           "id": "m21_o2",
-          "text": "Найти запасной ключ",
-          "requires": [
-            "m21_o1"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Пищалка",
+          "kind": 4,
+          "trap_slot": 0,
+          "room": "bedroom",
+          "label": "Звуковой сигнал",
+          "floor": 1
         },
         {
           "id": "m21_o3",
-          "text": "Открыть служебный путь",
-          "requires": [
-            "m21_o2"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Игрушка",
+          "kind": 6,
+          "trap_slot": 7,
+          "room": "study",
+          "label": "Игрушечный сигнал",
+          "floor": 1
         },
         {
           "id": "m21_o4",
-          "text": "Отвлечь соседа у кабинета",
-          "requires": [
-            "m21_o3"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Бумажная шутка",
+          "kind": 7,
+          "trap_slot": 4,
+          "room": "upper_living",
+          "label": "Глаза на портрете",
+          "floor": 1
+        },
+        {
+          "id": "m21_o5",
+          "action": "collect_then_arm_and_wait",
+          "item": "Краска",
+          "kind": 1,
+          "trap_slot": 1,
+          "room": "bedroom",
+          "label": "Смываемый отпечаток",
+          "floor": 1
+        },
+        {
+          "id": "m21_o6",
+          "action": "collect_then_arm_and_wait",
+          "item": "Мыло",
+          "kind": 2,
+          "trap_slot": 5,
+          "room": "upper_living",
+          "label": "Мыльная дорожка",
+          "floor": 1
+        },
+        {
+          "id": "m21_o7",
+          "action": "collect_then_arm_and_wait",
+          "item": "Мыло",
+          "kind": 2,
+          "trap_slot": 3,
+          "room": "upper_living",
+          "label": "Мыло у двери",
+          "floor": 1
+        },
+        {
+          "id": "m21_o8",
+          "action": "collect_then_arm_and_wait",
+          "item": "Конфетти",
+          "kind": 3,
+          "trap_slot": 6,
+          "room": "upper_living",
+          "label": "Праздничный хлопок",
+          "floor": 1
         }
       ],
-      "new_mechanic": "Маршрут отличается от привычных глав",
-      "neighbor_behavior": "Проверяет прежние точки ловушек и запирает знакомый путь",
-      "bonus": "Не использовать старое укрытие",
-      "par_seconds": 540,
-      "time_limit_is_failure": false,
-      "unlock_after": "m20",
-      "implementation_status": "designed_not_implemented"
+      "completion_rule": "Запустить все пакости, дождаться реакций соседа и выйти через выход на первом этаже (Godot floor_id = 0)"
     },
     {
       "id": "m22",
       "chapter": 6,
       "title": "Два взгляда",
-      "rooms": [
-        "dining",
-        "library",
-        "garden"
+      "floor": 1,
+      "goal": "Соедини звуки и обманки",
+      "bonus": "Ни одного одновременного обнаружения",
+      "bonus_rule": "combo3",
+      "par_seconds": 534,
+      "difficulty": 4,
+      "room_ids": [
+        "bedroom",
+        "study",
+        "upper_living"
       ],
-      "items": [
-        "toy_car",
-        "remote",
-        "paper_eyes"
-      ],
-      "objectives": [
+      "tasks": [
         {
           "id": "m22_o1",
-          "text": "Развести наблюдателей по разным зонам",
-          "requires": []
+          "action": "collect_then_arm_and_wait",
+          "item": "Игрушка",
+          "kind": 6,
+          "trap_slot": 4,
+          "room": "upper_living",
+          "label": "Игрушечная птица",
+          "floor": 1
         },
         {
           "id": "m22_o2",
-          "text": "Установить портрет-сюрприз",
-          "requires": [
-            "m22_o1"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Бумажная шутка",
+          "kind": 7,
+          "trap_slot": 7,
+          "room": "study",
+          "label": "Бумажные тени",
+          "floor": 1
         },
         {
           "id": "m22_o3",
-          "text": "Уйти через двор",
-          "requires": [
-            "m22_o2"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Бумажная шутка",
+          "kind": 7,
+          "trap_slot": 0,
+          "room": "bedroom",
+          "label": "Глаза на портрете",
+          "floor": 1
+        },
+        {
+          "id": "m22_o4",
+          "action": "collect_then_arm_and_wait",
+          "item": "Игрушка",
+          "kind": 6,
+          "trap_slot": 2,
+          "room": "upper_living",
+          "label": "Игрушечная машинка",
+          "floor": 1
+        },
+        {
+          "id": "m22_o5",
+          "action": "collect_then_arm_and_wait",
+          "item": "Пищалка",
+          "kind": 4,
+          "trap_slot": 6,
+          "room": "upper_living",
+          "label": "Звуковой сигнал",
+          "floor": 1
+        },
+        {
+          "id": "m22_o6",
+          "action": "collect_then_arm_and_wait",
+          "item": "Мыло",
+          "kind": 2,
+          "trap_slot": 3,
+          "room": "upper_living",
+          "label": "Мыльная дорожка",
+          "floor": 1
+        },
+        {
+          "id": "m22_o7",
+          "action": "collect_then_arm_and_wait",
+          "item": "Конфетти",
+          "kind": 3,
+          "trap_slot": 1,
+          "room": "bedroom",
+          "label": "Бумажный сюрприз",
+          "floor": 1
+        },
+        {
+          "id": "m22_o8",
+          "action": "collect_then_arm_and_wait",
+          "item": "Пена",
+          "kind": 5,
+          "trap_slot": 5,
+          "room": "upper_living",
+          "label": "Пенный стакан",
+          "floor": 1
         }
       ],
-      "new_mechanic": "Две независимые области зрения и слуха",
-      "neighbor_behavior": "Один идёт на звук, другой остаётся на посту",
-      "bonus": "Ни одного одновременного обнаружения",
-      "par_seconds": 600,
-      "time_limit_is_failure": false,
-      "unlock_after": "m21",
-      "implementation_status": "designed_not_implemented"
+      "completion_rule": "Запустить все пакости, дождаться реакций соседа и выйти через выход на первом этаже (Godot floor_id = 0)"
     },
     {
       "id": "m23",
       "chapter": 6,
       "title": "Большая подготовка",
-      "rooms": [
-        "workshop",
-        "pantry",
-        "bathroom",
+      "floor": 1,
+      "goal": "Размести восемь сюрпризов",
+      "bonus": "Без сброса подготовленных объектов",
+      "bonus_rule": "fast",
+      "par_seconds": 548,
+      "difficulty": 4,
+      "room_ids": [
+        "bedroom",
         "study",
-        "gallery"
+        "upper_living"
       ],
-      "items": [
-        "confetti",
-        "foam_capsule",
-        "squeaker",
-        "paper_eyes"
-      ],
-      "objectives": [
+      "tasks": [
         {
           "id": "m23_o1",
-          "text": "Собрать комплект для финала",
-          "requires": []
+          "action": "collect_then_arm_and_wait",
+          "item": "Пена",
+          "kind": 5,
+          "trap_slot": 0,
+          "room": "bedroom",
+          "label": "Пузырьки в ванной",
+          "floor": 1
         },
         {
           "id": "m23_o2",
-          "text": "Доставить предметы в четыре зоны",
-          "requires": [
-            "m23_o1"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Бумажная шутка",
+          "kind": 7,
+          "trap_slot": 4,
+          "room": "upper_living",
+          "label": "Подмена карточек",
+          "floor": 1
         },
         {
           "id": "m23_o3",
-          "text": "Сохранить все пути открытыми",
-          "requires": [
-            "m23_o2"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Пищалка",
+          "kind": 4,
+          "trap_slot": 7,
+          "room": "study",
+          "label": "Шумная подушка",
+          "floor": 1
         },
         {
           "id": "m23_o4",
-          "text": "Вернуться к исходной точке",
-          "requires": [
-            "m23_o3"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Бумажная шутка",
+          "kind": 7,
+          "trap_slot": 2,
+          "room": "upper_living",
+          "label": "Глаза на портрете",
+          "floor": 1
+        },
+        {
+          "id": "m23_o5",
+          "action": "collect_then_arm_and_wait",
+          "item": "Бумажная шутка",
+          "kind": 7,
+          "trap_slot": 5,
+          "room": "upper_living",
+          "label": "Бумажные тени",
+          "floor": 1
+        },
+        {
+          "id": "m23_o6",
+          "action": "collect_then_arm_and_wait",
+          "item": "Конфетти",
+          "kind": 3,
+          "trap_slot": 1,
+          "room": "bedroom",
+          "label": "Бумажный сюрприз",
+          "floor": 1
+        },
+        {
+          "id": "m23_o7",
+          "action": "collect_then_arm_and_wait",
+          "item": "Мыло",
+          "kind": 2,
+          "trap_slot": 3,
+          "room": "upper_living",
+          "label": "Мыло у двери",
+          "floor": 1
+        },
+        {
+          "id": "m23_o8",
+          "action": "collect_then_arm_and_wait",
+          "item": "Пищалка",
+          "kind": 4,
+          "trap_slot": 6,
+          "room": "upper_living",
+          "label": "Звуковой сигнал",
+          "floor": 1
         }
       ],
-      "new_mechanic": "Планирование маршрута с ограничением переносимого набора",
-      "neighbor_behavior": "Периодически осматривает верхний этаж и гараж",
-      "bonus": "Без сброса подготовленных объектов",
-      "par_seconds": 660,
-      "time_limit_is_failure": false,
-      "unlock_after": "m22",
-      "implementation_status": "designed_not_implemented"
+      "completion_rule": "Запустить все пакости, дождаться реакций соседа и выйти через выход на первом этаже (Godot floor_id = 0)"
     },
     {
       "id": "m24",
       "chapter": 6,
       "title": "Весь дом вверх дном",
-      "rooms": [
-        "foyer",
-        "kitchen",
-        "dining",
-        "living",
-        "bathroom",
+      "floor": 1,
+      "goal": "Устрой финальную цепочку пакостей",
+      "bonus": "Идеальная цепочка и ноль обнаружений",
+      "bonus_rule": "combo4",
+      "par_seconds": 562,
+      "difficulty": 4,
+      "room_ids": [
         "bedroom",
-        "library",
         "study",
-        "garden",
-        "garage"
+        "upper_living"
       ],
-      "items": [
-        "confetti",
-        "foam_capsule",
-        "squeaker",
-        "paper_eyes",
-        "toy_car"
-      ],
-      "objectives": [
+      "tasks": [
         {
           "id": "m24_o1",
-          "text": "Запустить первую реакцию по условному сигналу",
-          "requires": []
+          "action": "collect_then_arm_and_wait",
+          "item": "Конфетти",
+          "kind": 3,
+          "trap_slot": 7,
+          "room": "study",
+          "label": "Праздничный хлопок",
+          "floor": 1
         },
         {
           "id": "m24_o2",
-          "text": "Провести цепочку по двум этажам",
-          "requires": [
-            "m24_o1"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Пена",
+          "kind": 5,
+          "trap_slot": 2,
+          "room": "upper_living",
+          "label": "Пузырьки в ванной",
+          "floor": 1
         },
         {
           "id": "m24_o3",
-          "text": "Развести двух наблюдателей",
-          "requires": [
-            "m24_o2"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Бумажная шутка",
+          "kind": 7,
+          "trap_slot": 4,
+          "room": "upper_living",
+          "label": "Глаза на портрете",
+          "floor": 1
         },
         {
           "id": "m24_o4",
-          "text": "Закончить большой сюрприз во дворе",
-          "requires": [
-            "m24_o3"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Пищалка",
+          "kind": 4,
+          "trap_slot": 0,
+          "room": "bedroom",
+          "label": "Музыкальное кресло",
+          "floor": 1
         },
         {
           "id": "m24_o5",
-          "text": "Уйти через главный вход",
-          "requires": [
-            "m24_o4"
-          ]
+          "action": "collect_then_arm_and_wait",
+          "item": "Бумажная шутка",
+          "kind": 7,
+          "trap_slot": 3,
+          "room": "upper_living",
+          "label": "Бумажные тени",
+          "floor": 1
+        },
+        {
+          "id": "m24_o6",
+          "action": "collect_then_arm_and_wait",
+          "item": "Мыло",
+          "kind": 2,
+          "trap_slot": 5,
+          "room": "upper_living",
+          "label": "Пенная ловушка",
+          "floor": 1
+        },
+        {
+          "id": "m24_o7",
+          "action": "collect_then_arm_and_wait",
+          "item": "Краска",
+          "kind": 1,
+          "trap_slot": 6,
+          "room": "upper_living",
+          "label": "Краска на коврике",
+          "floor": 1
+        },
+        {
+          "id": "m24_o8",
+          "action": "collect_then_arm_and_wait",
+          "item": "Бумажная шутка",
+          "kind": 7,
+          "trap_slot": 1,
+          "room": "bedroom",
+          "label": "Забавные карточки",
+          "floor": 1
         }
       ],
-      "new_mechanic": "Финальная цепочка без опасных действий и необратимых блокировок",
-      "neighbor_behavior": "Согласованное расследование двух NPC, но без телепортации",
-      "bonus": "Идеальная цепочка и ноль обнаружений",
-      "par_seconds": 900,
-      "time_limit_is_failure": false,
-      "unlock_after": "m23",
-      "implementation_status": "designed_not_implemented"
+      "completion_rule": "Запустить все пакости, дождаться реакций соседа и выйти через выход на первом этаже (Godot floor_id = 0)"
     }
   ],
-  "completion_rule": "Все основные цели + безопасный выход; таймер используется только для дополнительной звезды.",
-  "failure_rule": "Три поимки; после перезапуска миссии предметы восстанавливаются, сохранение предыдущих миссий не стирается.",
-  "stars": [
-    "Выполнить основные цели",
-    "Выполнить дополнительное условие",
-    "Уложиться в ориентир времени без поимки"
-  ],
-  "monetization": "no_ads_no_store_in_current_design"
+  "no_extra_rooms": true,
+  "ads_or_store": false,
+  "notes": "24 playable prototypes; bespoke scripting and device-level art QA still in progress."
 }
