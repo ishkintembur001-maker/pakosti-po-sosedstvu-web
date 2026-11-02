@@ -51,7 +51,7 @@ jobs:
           if grep -E 'SCRIPT ERROR|Parse Error|TEST_FAILED' evidence/import.log; then
             echo "Godot script import failed"; exit 1
           fi
-          for test in episode_smoke mobile_qa house_qa animation_qa mobile_layout_qa cast_quality_qa environment_qa; do
+          for test in episode_smoke mobile_qa house_qa animation_qa mobile_layout_qa cast_quality_qa environment_qa visual_integrity_qa; do
             timeout --signal=TERM --kill-after=10s 180s tools/Godot_v4.4.1-stable_linux.x86_64 --headless --audio-driver Dummy --path source --script res://tests/$test.gd > evidence/$test.log 2>&1 || {
               echo "Godot test failed or timed out: $test"; tail -n 60 evidence/$test.log; exit 1;
             }

@@ -13,4 +13,26 @@ func run():
   for i in range(3):await process_frame
   await RenderingServer.frame_post_draw
   root.get_texture().get_image().save_png(folder+clip+".png")
+ # Review motion at multiple phases; single still frames cannot reveal limb drift.
+ for phase in [0.15,0.35,0.55,0.75,0.95]:
+  for actor in [g.hero,g.neighbor]:
+   var animator:AnimationPlayer=actor.get_meta("animation_player")
+   animator.play("walk")
+   animator.seek(animator.get_animation("walk").length*phase,true)
+   animator.advance(0)
+   animator.speed_scale=0
+  for frame in range(2):await process_frame
+  await RenderingServer.frame_post_draw
+  root.get_texture().get_image().save_png(folder+"walk_phase_%02d.png"%int(phase*100))
+ for phase in [0.2,0.45,0.7]:
+  for actor in [g.hero,g.neighbor]:
+   var animator:AnimationPlayer=actor.get_meta("animation_player")
+   var role_clip="caught_react" if actor==g.hero else "catch"
+   animator.play(role_clip)
+   animator.seek(animator.get_animation(role_clip).length*phase,true)
+   animator.advance(0)
+   animator.speed_scale=0
+  for frame in range(2):await process_frame
+  await RenderingServer.frame_post_draw
+  root.get_texture().get_image().save_png(folder+"capture_phase_%02d.png"%int(phase*100))
  g.queue_free();await process_frame;await process_frame;quit()
