@@ -33,3 +33,7 @@ The supplied cinematic reference is still NOT met: clothing folds and cloth text
 ## Audit notes (24-mission verification)
 
 The camera and cutaway shader now show both existing floors simultaneously. Item labels appear only near the hero to avoid overcrowding. Temporary prank effects are cleared on restart. The bonus shown to players derives from implemented, testable conditions (no capture, par time or combo); original storyboard bonuses that need unavailable props or AI are not advertised as working.
+
+## AI: hearing and last-seen position
+
+Installing a trap or picking up an object makes a location-specific sound. The neighbor investigates the sound rather than knowing the player's location automatically. After seeing a player, the neighbor retains the last known position briefly, without seeing through hiding or walls. New regression tests cover both behaviors.
