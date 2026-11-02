@@ -495,7 +495,9 @@ func tick_enemy(dt:float):
  if investigate and neighbor_pos.distance_to(noise_pos)<.55:noise_timer=0;investigate=false
  if neighbor_pos.distance_to(dest)<.50 and pursue_stairs:
   begin_neighbor_stairs();return
- if neighbor_pos.distance_to(dest)<.15 and not chasing and not pursue_stairs and not investigate:
+ # AStarGrid2D snaps the destination to 20-cm cells; the old 15-cm
+ # threshold can leave the enemy permanently waiting at the final cell.
+ if neighbor_pos.distance_to(dest)<.28 and not chasing and not pursue_stairs and not investigate:
   waypoint=(waypoint+1)%route.size();dest=route[waypoint];enemy_path.clear()
  if enemy_path.is_empty() or enemy_repath_time<=0 or enemy_path_goal.distance_to(dest)>.35:
   enemy_path=path(neighbor_pos,dest,neighbor_floor)

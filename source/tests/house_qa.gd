@@ -66,6 +66,11 @@ func run():
   g.hidden=true;g.safe_time=999;var frames=0
   while not g.escape_ready and frames<24000:
    g.elapsed+=1.0/60;g.tick_enemy(1.0/60);frames+=1
+  if not g.escape_ready:
+   var missing=[]
+   for trap in g.targets:
+    if not trap.used:missing.append({"pos":trap.pos,"armed":trap.armed,"kind":trap.kind})
+   print("HOUSE_PATROL_STUCK case=",mission+1," neighbor=",g.neighbor_pos," waypoint=",g.waypoint," dest=",g.route[g.waypoint]," noise_time=",g.noise_timer," last_seen=",g.last_seen_pos," active_path=",g.enemy_path.size()," missing=",missing)
   check(g.escape_ready,"Patrol did not trigger every trap in case %d"%mission)
   check(g.anger_events==g.targets.size(),"Neighbor anger must increase after each prank")
   g.guide_to_exit()
@@ -157,7 +162,10 @@ func run():
   if g.neighbor_floor==1:
    actually_ascended=true;break
  check(actually_ascended,"Neighbor could not navigate from lower patrol corridor to upstairs")
- check(g.enemy_repath_time>0,"AI navigation should use a repath cooldown")
+ # Force a fresh path request: do not assert on a timer after it naturally expires.
+ g.start_case(0);g.enemy_repath_time=0;g.enemy_path.clear();g.reaction=0;g.alert=0
+ g.tick_enemy(1.0/60)
+ check(g.enemy_repath_time>0,"AI path replan cooldown was not scheduled")
  g.start_case(0);check(g.particles.is_empty(),"Temporary prank effects leaked between levels")
  g.caught=0;check(g.qualifies_bonus(),"No-capture bonus should count")
  g.caught=1;check(not g.qualifies_bonus(),"No-capture bonus should fail after capture")
