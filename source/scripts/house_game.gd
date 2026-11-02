@@ -432,6 +432,9 @@ func attach_animations(actor:Node3D,source_name:String):
    else:animation.track_set_path(track,NodePath(p.substr(at+marker.length())))
   if animation.get_track_count()==0:continue
   var name=String(clip).get_file()
+  # The source import stores both actors in one glTF animation library.
+  if name=="catch" and source_name!="NeighborCharacter":continue
+  if name=="caught_react" and source_name!="TricksterCharacter":continue
   animation.loop_mode=Animation.LOOP_LINEAR if name in ["idle","walk","sneak","run"] else Animation.LOOP_NONE
   library.add_animation(name,animation)
  player.add_animation_library("",library)
