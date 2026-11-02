@@ -334,13 +334,22 @@ func make_marker(p:Vector2,f:int,kind:int,supply:bool,custom_title:String="")->N
  n.add_child(make_prank_prop(kind))
  return n
 func update_prank_labels():
+ # Show only the closest nearby world label; never obscure the 3D characters.
+ var nearest_label:Label3D=null
+ var nearest_distance=1.55
  for item in targets+supplies:
   if not is_instance_valid(item.node):continue
   var still_active=not bool(item.get("used",false)) and not bool(item.get("taken",false))
   if item.has("armed") and item.armed:still_active=false
   item.node.visible=still_active and item.floor==floor_id
   for child in item.node.get_children():
-   if child is Label3D:child.visible=item.node.visible and player_pos.distance_to(item.pos)<2.6
+   if child is Label3D:
+    child.visible=false
+    var distance=player_pos.distance_to(item.pos)
+    if item.node.visible and distance<nearest_distance:
+     nearest_distance=distance
+     nearest_label=child
+ if is_instance_valid(nearest_label):nearest_label.visible=true
 func make_exit_marker()->Node3D:
  var n=Node3D.new();n.name="SafeExit";n.position=Vector3(EXIT_POS.x,floor_height(EXIT_POS,0)+.05,EXIT_POS.y);add_child(n)
  var mesh=MeshInstance3D.new();var ring=TorusMesh.new();ring.inner_radius=.37;ring.outer_radius=.45;mesh.mesh=ring
