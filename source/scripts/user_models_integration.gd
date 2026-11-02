@@ -1,6 +1,6 @@
 extends RefCounted
 ## Integrates the owner's five GLB models into the existing 24-mission house.
-## All five are required. Failed imports leave the original game intact.
+## All five original owner models are mandatory; never use substitute visuals.
 const HERO = "res://assets/user_models/hero_rigged.glb"
 const NEIGHBOR = "res://assets/user_models/neighbor_rigged.glb"
 const LOWER = "res://assets/user_models/house_lower_quality.glb"
@@ -32,6 +32,7 @@ static func _hide_original_meshes(actor:Node3D) -> void:
 
 static func try_install(game) -> bool:
  if not available():
+  push_error("ORIGINAL_OWNER_MODELS_MISSING: all five original GLB models are required")
   return false
  var loaded=[]
  for resource_path in PATHS:

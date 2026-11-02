@@ -185,7 +185,8 @@ func run():
  check(g.floor_id==0 and not g.blocked(g.player_pos,0),"Stair descent failed")
  menu.return_menu();check(menu.panel.visible and menu.active_game==null,"Return to menu failed")
  menu.music_level=.23;menu.sfx_level=.31;menu.save_settings();var saved=ConfigFile.new();saved.load(save);check(is_equal_approx(saved.get_value("audio","music",0),.23),"Audio settings not persisted")
- menu.start_classic();check(menu.active_game.state==1,"Classic launch failed");menu.return_menu()
+ check(not menu.panel.has_node("Classic"),"Old character mode must not exist")
+ check(preload("res://scripts/user_models_integration.gd").available(),"Original owner models not present")
  menu.queue_free();await process_frame;await process_frame
  if had:
   var file=FileAccess.open(save,FileAccess.WRITE);file.store_buffer(old);file.close()

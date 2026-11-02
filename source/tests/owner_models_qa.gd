@@ -7,8 +7,8 @@ func check(ok:bool,reason:String)->void:
 func _initialize()->void:call_deferred("run")
 func run()->void:
  if not preload("res://scripts/user_models_integration.gd").available():
-  print("OWNER_MODEL_QA_SKIPPED: no model pack")
-  quit(0)
+  push_error("OWNER_MODEL_QA_FAILED: missing original models")
+  quit(1)
   return
  var game=load("res://scenes/house.tscn").instantiate()
  root.add_child(game)

@@ -145,9 +145,7 @@ func open_cases():
   b.add_theme_font_size_override("font_size",15 if best>0 else 18)
   b.clip_text=true;apply_mission_style(b,best>0,i>unlocked);grid.add_child(b)
   var selected=i;b.pressed.connect(func():start_house(selected))
- var row=HBoxContainer.new();row.add_theme_constant_override("separation",12);box.add_child(row)
- var classic=Button.new();classic.text="КЛАССИЧЕСКИЕ УРОВНИ";classic.custom_minimum_size=Vector2(318,68);classic.pressed.connect(start_classic);row.add_child(classic)
- var back=Button.new();back.text="НАЗАД";back.custom_minimum_size=Vector2(318,68);back.pressed.connect(dismiss);row.add_child(back)
+ var back=Button.new();back.text="НАЗАД К ГЛАВНОМУ МЕНЮ";back.custom_minimum_size=Vector2(660,68);back.pressed.connect(dismiss);box.add_child(back)
 func open_settings():
  var box=dialog("ЗВУК И УПРАВЛЕНИЕ")
  for i in range(2):
@@ -165,13 +163,17 @@ func start_mission_music():
  if not mission_theme.playing:mission_theme.play()
  if not chase_theme.playing:chase_theme.play()
 func start_house(i:int):
+ if not preload("res://scripts/user_models_integration.gd").available():
+  var box=dialog("ОРИГИНАЛЬНЫЕ 3D-МОДЕЛИ НЕ НАЙДЕНЫ")
+  var message=Label.new()
+  message.text="Сборка заблокирована: вместо наших героев не будут показаны другие.\nТребуются пять GLB в assets/user_models."
+  message.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
+  message.custom_minimum_size=Vector2(640,200)
+  box.add_child(message)
+  close_button(box)
+  return
  dismiss();ensure_music();settings.load(SAVE);var unlocked=int(settings.get_value("house","unlocked",0));i=clampi(i,0,unlocked);settings.set_value("house","last",i);settings.save(SAVE)
  panel.hide();active_game=load("res://scenes/house.tscn").instantiate();active_game.index=i;get_tree().root.add_child(active_game);active_game.menu_requested.connect(return_menu);start_mission_music()
-func start_classic():
- dismiss();ensure_music();panel.hide();active_game=load("res://scenes/main_3d.tscn").instantiate();get_tree().root.add_child(active_game);active_game.add_to_group("mobile_games");active_game.start_level(active_game.unlocked)
- for child in active_game.get_children():
-  if child is AudioStreamPlayer:child.bus="SFX"
- start_mission_music()
 func return_menu():
  if is_instance_valid(active_game):
   for player in active_game.find_children("*","AudioStreamPlayer",true,false):player.stop()

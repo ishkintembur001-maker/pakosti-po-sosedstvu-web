@@ -145,13 +145,19 @@ func _ready():
  make_slices(environment_root)
  # Only swap graphics when the COMPLETE owner-supplied GLB pack is installed.
  # The original physics, missions, pathfinding, staircase and AI remain intact.
- preload("res://scripts/user_models_integration.gd").try_install(self)
+ if not preload("res://scripts/user_models_integration.gd").try_install(self):
+  push_error("ORIGINAL_OWNER_ASSETS_REQUIRED: refusing to show substitute characters")
+  actor_source.hide()
+  hero.hide()
+  neighbor.hide()
+  queue_free()
+  return
  for f in range(2):navs.append(build_nav(f))
  camera=Camera3D.new();camera.projection=Camera3D.PROJECTION_ORTHOGONAL;camera.size=10.2;add_child(camera);camera.current=true
  shadow=DirectionalLight3D.new();shadow.rotation_degrees=Vector3(-55,-25,0);shadow.light_color=Color("fff4e5");shadow.light_energy=.22;shadow.shadow_enabled=true;shadow.directional_shadow_max_distance=32;add_child(shadow)
  var env=WorldEnvironment.new();var e=Environment.new();e.background_mode=Environment.BG_COLOR;e.background_color=Color("202a2e");e.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR;e.ambient_light_color=Color("d1e0e4");e.ambient_light_energy=.38;e.tonemap_mode=Environment.TONE_MAPPER_FILMIC;env.environment=e;add_child(env)
  # Two unshadowed local practical lights add depth to faces and the furnished rooms.
- # These keep the Web Compatibility renderer usable on mobile Safari.
+ # Native-compatible lighting for Android and iPhone.
  warm_room_key=OmniLight3D.new();warm_room_key.name="WarmRoomKey"
  warm_room_key.position=Vector3(-2.9,3.0,3.2)
  warm_room_key.light_color=Color("ffdfbb");warm_room_key.light_energy=.48
@@ -167,7 +173,7 @@ func _ready():
   var p=AudioStreamPlayer.new();p.stream=load("res://assets/sfx/%s.wav"%k);p.bus="SFX";add_child(p);sfx[k]=p
  neighbor_voice=AudioStreamPlayer.new();neighbor_voice.bus="SFX";neighbor_voice.name="NeighborVoice";add_child(neighbor_voice)
  start_case(index)
- var cfg=ConfigFile.new();cfg.load("user://pakosti_release.cfg");set_quality(bool(cfg.get_value("graphics","detail",not (OS.has_feature("web") or OS.has_feature("mobile")))))
+ var cfg=ConfigFile.new();cfg.load("user://pakosti_release.cfg");set_quality(bool(cfg.get_value("graphics","detail",not OS.has_feature("mobile"))))
 
 func floor_height(p:Vector2,f:int)->float:
  if floor_data.is_empty():return .20+f*H
