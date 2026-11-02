@@ -61,6 +61,13 @@ var inventory=[0,0,0,0,0,0,0,0]
 var navs=[]
 var player_path=PackedVector2Array()
 var enemy_path=PackedVector2Array()
+var enemy_climbing=0.0
+var enemy_climb_from=0
+var enemy_climb_to=0
+var enemy_climb_start=Vector2.ZERO
+var enemy_climb_end=Vector2.ZERO
+var enemy_stair_world=Vector3.ZERO
+var enemy_search_time=0.0
 var waypoint=0
 var route=[Vector2(-4.1,1.1),Vector2(0,1.1),Vector2(3.7,1.1),Vector2(0,1.1)]
 var elapsed=0.0
@@ -223,7 +230,7 @@ func start_case(n:int):
  for t in targets:t.node.queue_free()
  for t in supplies:t.node.queue_free()
  targets.clear();supplies.clear();if is_instance_valid(exit_marker):exit_marker.queue_free()
- inventory=[0,0,0,0,0,0,0,0];lives=3;caught=0;elapsed=0;action_time=0;stick=Vector2.ZERO;hidden=false;reaction=0;anger=0;anger_events=0;bonus_awarded=false;combo=0;best_combo=0;combo_timer=0;capture_time=0;safe_time=4;alert=0;climbing=0;state="playing";player_path.clear();enemy_path.clear();waypoint=1
+ inventory=[0,0,0,0,0,0,0,0];lives=3;caught=0;elapsed=0;action_time=0;stick=Vector2.ZERO;hidden=false;reaction=0;anger=0;anger_events=0;bonus_awarded=false;combo=0;best_combo=0;combo_timer=0;capture_time=0;safe_time=4;alert=0;climbing=0;state="playing";player_path.clear();enemy_path.clear();enemy_climbing=0;enemy_search_time=0;waypoint=1
  var tasks:Array=CASES[index].tasks
  for i in range(tasks.size()):
   var data:Array=tasks[i]
@@ -356,20 +363,58 @@ func tick_capture(dt:float):
   hero.rotation.z=0;neighbor.rotation.z=0
   player_pos=EXIT_POS;floor_id=0;safe_time=5.5;alert=0;enemy_path.clear();set_slice()
   if lives<=0:state="lost";hud.show_result(false)
+func begin_neighbor_stairs():
+ if enemy_climbing>0 or enemy_search_time<=0:return
+ enemy_climb_from=neighbor_floor;enemy_climb_to=floor_id
+ enemy_climb_start=neighbor_pos
+ enemy_climb_end=Vector2(5.0,-2.15) if enemy_climb_from==0 else Vector2(6.7,1.8)
+ enemy_climbing=3.1;enemy_path.clear()
+func update_neighbor_stairs(dt:float):
+ enemy_climbing=maxf(0,enemy_climbing-dt)
+ var progress=1.0-enemy_climbing/3.1
+ var bottom=STAIR_BOTTOM;var top=STAIR_TOP
+ var entry=bottom if enemy_climb_from==0 else top
+ var landing=top if enemy_climb_from==0 else bottom
+ var p:Vector2;var height:float
+ if progress<.18:
+  p=enemy_climb_start.lerp(entry,progress/.18);height=enemy_climb_from*H
+ elif progress<.82:
+  var portion=(progress-.18)/.64
+  p=entry.lerp(landing,portion);height=lerpf(enemy_climb_from*H,enemy_climb_to*H,portion)
+ else:
+  p=landing.lerp(enemy_climb_end,(progress-.82)/.18);height=enemy_climb_to*H
+ enemy_stair_world=Vector3(p.x,.2+height,p.y)
+ if enemy_climbing<=0:
+  neighbor_floor=enemy_climb_to;neighbor_pos=enemy_climb_end
+  enemy_path.clear();enemy_search_time=maxf(enemy_search_time,2.0)
 func tick_enemy(dt:float):
+ enemy_search_time=maxf(0,enemy_search_time-dt)
+ if enemy_climbing>0:
+  update_neighbor_stairs(dt)
+  return
  if reaction>0:
   reaction=maxf(0,reaction-dt);return
  var diff=player_pos-neighbor_pos
  var can_see=floor_id==neighbor_floor and not hidden and climbing<=0 and safe_time<=0 and diff.length()<3.1+anger*1.5 and diff.normalized().dot(face)>-.1 and clear_line(neighbor_pos,player_pos,neighbor_floor)
+ if can_see:enemy_search_time=maxf(enemy_search_time,6.0+anger*3.0)
  alert=clampf(alert+dt*((1.1+anger*.65+float(CASES[index].difficulty)*.09) if can_see else -.5),0,1)
- var dest:Vector2=player_pos if alert>.85 else route[waypoint]
- if neighbor_pos.distance_to(dest)<.15 and alert<=.85:waypoint=(waypoint+1)%route.size();dest=route[waypoint]
- if enemy_path.is_empty() or (alert>.85 and int(elapsed*4)%3==0):enemy_path=path(neighbor_pos,dest,neighbor_floor)
+ var pursue_stairs=enemy_search_time>0 and floor_id!=neighbor_floor
+ var stair_entry=Vector2(6.7,1.8) if neighbor_floor==0 else Vector2(5.0,-2.15)
+ var dest:Vector2=stair_entry if pursue_stairs else (player_pos if alert>.85 and floor_id==neighbor_floor else route[waypoint])
+ if neighbor_pos.distance_to(dest)<.50 and pursue_stairs:
+  begin_neighbor_stairs();return
+ if neighbor_pos.distance_to(dest)<.15 and alert<=.85 and not pursue_stairs:
+  waypoint=(waypoint+1)%route.size();dest=route[waypoint]
+ if enemy_path.is_empty() or (alert>.85 and int(elapsed*4)%3==0):
+  enemy_path=path(neighbor_pos,dest,neighbor_floor)
  while not enemy_path.is_empty() and neighbor_pos.distance_to(enemy_path[0])<.055:enemy_path.remove_at(0)
  if not enemy_path.is_empty():
-  var step=enemy_path[0]-neighbor_pos;face=step.normalized();neighbor_pos+=step.limit_length(dt*((2.3+anger*1.35+float(CASES[index].difficulty)*.12) if alert>.85 else (1.15+anger*.75+float(CASES[index].difficulty)*.10)))
- for t in targets:
-  if t.armed and not t.used and neighbor_floor==t.floor and neighbor_pos.distance_to(t.pos)<.45:finish_prank(t);return
+  var step=enemy_path[0]-neighbor_pos
+  face=step.normalized()
+  var speed=(2.3+anger*1.35+float(CASES[index].difficulty)*.12) if alert>.85 else (1.15+anger*.75+float(CASES[index].difficulty)*.10)
+  neighbor_pos+=step.limit_length(dt*speed)
+ for trap in targets:
+  if trap.armed and not trap.used and neighbor_floor==trap.floor and neighbor_pos.distance_to(trap.pos)<.45:finish_prank(trap);return
  if can_see and diff.length()<.62:begin_capture()
 func clear_line(a:Vector2,b:Vector2,f:int)->bool:
  for i in range(1,15):
@@ -403,11 +448,11 @@ func _process(dt:float):
     if escape_route:guide_to_exit()
   else:move_player(dt)
   tick_enemy(dt)
- neighbor.position=Vector3(neighbor_pos.x,floor_height(neighbor_pos,neighbor_floor)-.015,neighbor_pos.y)
+ neighbor.position=enemy_stair_world if enemy_climbing>0 else Vector3(neighbor_pos.x,floor_height(neighbor_pos,neighbor_floor)-.015,neighbor_pos.y)
  neighbor.rotation.y=atan2(face.x,face.y);animate(neighbor,0 if reaction>0 else 1,reaction_kind+1 if reaction>0 else 0)
- hero.visible=not hidden;neighbor.visible=neighbor_floor==floor_id or climbing>0
+ hero.visible=not hidden;neighbor.visible=neighbor_floor==floor_id or climbing>0 or enemy_climbing>0
  update_contact(hero_contact,hero,player_pos,floor_id,not hidden and climbing<=0)
- update_contact(neighbor_contact,neighbor,neighbor_pos,neighbor_floor,neighbor.visible)
+ update_contact(neighbor_contact,neighbor,neighbor_pos,neighbor_floor,neighbor.visible and enemy_climbing<=0)
  var focus=hero.position+Vector3(0,.8,0);var target=Vector3(clampf(focus.x,-3,3),H*.65,0)
  camera.position=target+Vector3(1.2,7.5,17);camera.look_at(target)
  for i in range(particles.size()-1,-1,-1):
