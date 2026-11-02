@@ -34,6 +34,6 @@ The supplied cinematic reference is still NOT met: clothing folds and cloth text
 
 The camera and cutaway shader now show both existing floors simultaneously. Item labels appear only near the hero to avoid overcrowding. Temporary prank effects are cleared on restart. The bonus shown to players derives from implemented, testable conditions (no capture, par time or combo); original storyboard bonuses that need unavailable props or AI are not advertised as working.
 
-## AI: hearing and last-seen position
+## Patrol route fixes
 
-Installing a trap or picking up an object makes a location-specific sound. The neighbor investigates the sound rather than knowing the player's location automatically. After seeing a player, the neighbor retains the last known position briefly, without seeing through hiding or walls. New regression tests cover both behaviors.
+The neighbor now uses mission-specific routes built from the actual trap sites. Four patterns alternate between left-to-right, right-to-left and two zigzags, all containing every active trap. Native tests cover route completeness for all 24 missions. This does not yet implement unique household schedules or full AI investigation for every authored storyline.

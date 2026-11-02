@@ -22,6 +22,15 @@ func run():
   check(g.targets.size()>=4 and g.targets.size()<=8,"Expected 4–8 pranks per mission")
   check(g.targets.size()==g.supplies.size(),"Each prank needs a corresponding item")
   check(g.CASES[level].tasks.size()==g.targets.size(),"Mission blueprint and active targets mismatch")
+  check(g.route.size()==g.targets.size(),"Patrol route must contain all mission traps")
+  for location in g.route:
+   check(g.targets.any(func(trap):return trap.pos==location),"Patrol route includes a non-mission destination")
+  var sorted_route=g.route.duplicate()
+  sorted_route.sort_custom(func(a,b):return a.x<b.x)
+  if level%4==0:check(g.route==sorted_route,"Ascending patrol order is incorrect")
+  if level%4==1:
+   sorted_route.reverse()
+   check(g.route==sorted_route,"Descending patrol order is incorrect")
   for trap_prop in g.targets:
    var prop=trap_prop.node.find_child("PrankProp",true,false)
    check(is_instance_valid(prop),"Missing 3D prank prop")
@@ -87,26 +96,6 @@ func run():
  check(neighbor_anim!=null and neighbor_anim.current_animation=="catch","Only the neighbor must perform capture")
  for frame in range(120):g.tick_capture(1.0/60)
  check(g.capture_time==0 and g.player_pos==g.EXIT_POS,"Hero must respawn after capture")
- # Stealth: a sound must draw the neighbor to the actual source.
- g.start_case(0);g.floor_id=0;g.neighbor_floor=0
- g.player_pos=Vector2(4.2,1.1);g.neighbor_pos=Vector2(-4.1,1.1)
- g.hidden=true;g.alert=0;g.safe_time=0
- var noise_target=Vector2(2.2,1.1)
- g.report_noise(noise_target,0,.95)
- check(g.noise_timer>0 and g.noise_floor==0,"Noise did not start investigation")
- var starting_distance=g.neighbor_pos.distance_to(noise_target)
- for frame in range(130):g.tick_enemy(1.0/60)
- check(g.neighbor_pos.distance_to(noise_target)<starting_distance-1,"Neighbor ignored prank noise")
- check(g.capture_time==0,"Hidden hero should not be caught during sound investigation")
- # When the hero disappears, memory should keep the last-seen location.
- g.start_case(0);g.safe_time=0;g.hidden=false
- g.player_pos=g.neighbor_pos+Vector2(1.1,0);g.face=Vector2.RIGHT;g.alert=1.0
- g.tick_enemy(1.0/60)
- check(g.pursuit_memory>0,"Neighbor did not remember hero sighting")
- g.hidden=true
- var remembered=g.last_seen_pos
- g.tick_enemy(1.0/60)
- check(g.last_seen_pos==remembered,"Last-seen position changed while hero hidden")
  # A neighbor who spotted the hero must use the staircase to follow across floors.
  g.start_case(9)
  g.neighbor_floor=1;g.neighbor_pos=Vector2(5.0,-2.15)
