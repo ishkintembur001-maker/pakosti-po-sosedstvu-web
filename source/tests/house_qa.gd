@@ -23,7 +23,7 @@ func run():
   check(g.targets.size()==g.supplies.size(),"Each prank needs a corresponding item")
   check(g.CASES[level].tasks.size()==g.targets.size(),"Mission blueprint and active targets mismatch")
   check(g.route.size()>=g.targets.size()+2,"Patrol route must cover the hallway and all mission traps")
-  check(g.route[0]==Vector2(-4.1,1.1) and g.route[1]==Vector2(3.7,1.1),"Initial full sweep is missing")
+  check(g.route[0]==Vector2(-4.1,1.1) and g.route[1]==g.TRAP_SPOTS[7],"Initial full sweep is missing")
   for location in g.route.slice(2):
    check(g.targets.any(func(trap):return trap.pos==location),"Patrol route contains a non-mission waypoint")
   var sorted_route=g.route.slice(2)
@@ -116,7 +116,7 @@ func run():
  check(g.capture_time==0,"Hidden hero should be safe while noise is investigated")
  # A seen player leaves a remembered location once hidden.
  g.start_case(0);g.safe_time=0;g.hidden=false
- g.player_pos=g.neighbor_pos+Vector2(1.1,0);g.face=Vector2.RIGHT
+ g.neighbor_pos=Vector2(-5.3,1.1);g.player_pos=Vector2(-4.25,1.1);g.face=Vector2.RIGHT
  g.tick_enemy(1.0/60)
  check(g.pursuit_memory>0,"Neighbor did not remember a sighting")
  g.hidden=true

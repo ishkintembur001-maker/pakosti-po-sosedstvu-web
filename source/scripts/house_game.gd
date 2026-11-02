@@ -8,8 +8,8 @@ const MODEL=preload("res://assets/models/two_storey.glb")
 const CUTAWAY_SHADER=preload("res://shaders/cutaway.gdshader")
 const CONTACT_SHADER=preload("res://shaders/contact_shadow.gdshader")
 const EXIT_POS=Vector2(4.2,1.1)
-const TRAP_SPOTS=[Vector2(-4.1,1.1),Vector2(-3.2,1.1),Vector2(-2.25,1.1),Vector2(-1.2,1.1),Vector2(0,1.1),Vector2(1.1,1.1),Vector2(2.2,1.1),Vector2(3.7,1.1)]
-const SUPPLY_SPOTS=[Vector2(-6.55,1.85),Vector2(-4.85,1.85),Vector2(-3.35,1.85),Vector2(-1.85,1.85),Vector2(-.45,1.85),Vector2(1.4,1.85),Vector2(3.5,1.85),Vector2(5.25,1.85)]
+const TRAP_SPOTS=[Vector2(-4.1,1.1),Vector2(-3.45,1.1),Vector2(-2.25,1.1),Vector2(-1.2,1.1),Vector2(0,1.1),Vector2(1.1,1.1),Vector2(2.2,1.1),Vector2(3.15,1.1)]
+const SUPPLY_SPOTS=[Vector2(-4.95,1.85),Vector2(-4.25,1.85),Vector2(-3.35,1.85),Vector2(-1.85,1.85),Vector2(-.45,1.85),Vector2(1.4,1.85),Vector2(3.5,1.85),Vector2(5.25,1.85)]
 const CASES=[
  {"id":"m01","chapter":1,"title":"Первый след","floor":0,"goal":"Подготовь прихожую и уйди незаметно","bonus":"Без подсказки пройти за спиной соседа","bonus_rule":"clean","par":240,"difficulty":0,"tasks":[[0,0,"Кожура у ковра"],[4,2,"Пищалка под креслом"],[3,4,"Конфетти у порога"],[2,7,"Мыльная дорожка"]]},
  {"id":"m02","chapter":1,"title":"Музыкальное кресло","floor":0,"goal":"Заставь кресло издавать смешные звуки","bonus":"Установить пищалку без погони","bonus_rule":"clean","par":254,"difficulty":0,"tasks":[[4,7,"Пищалка под креслом"],[4,4,"Шумная подушка"],[4,2,"Музыкальное кресло"],[7,0,"Шуточная наклейка"]]},
@@ -76,7 +76,7 @@ var noise_pos=Vector2.ZERO
 var noise_floor=0
 var noise_timer=0.0
 var waypoint=0
-var route=[Vector2(-4.1,1.1),Vector2(0,1.1),Vector2(3.7,1.1),Vector2(0,1.1)]
+var route=[Vector2(-4.1,1.1),Vector2(0,1.1),Vector2(3.15,1.1),Vector2(0,1.1)]
 var elapsed=0.0
 var hidden=false
 var state="playing"
@@ -278,7 +278,7 @@ func build_patrol_route():
   sorted_points=zigzag
  # First do a full guaranteed sweep of the prank corridor. Mission-specific
  # zigzags follow it, but can never strand an active target at either end.
- route=[Vector2(-4.1,1.1),Vector2(3.7,1.1)]
+ route=[Vector2(-4.1,1.1),Vector2(3.15,1.1)]
  route.append_array(sorted_points)
  waypoint=0
 func prop_piece(root:Node3D,mesh:PrimitiveMesh,color:Color,position:Vector3,size:Vector3)->void:
@@ -538,7 +538,9 @@ func tick_enemy(dt:float):
  if can_see and diff.length()<.62:begin_capture()
 func clear_line(a:Vector2,b:Vector2,f:int)->bool:
  for i in range(1,15):
-  if blocked(a.lerp(b,float(i)/15),f):return false
+  var sample=a.lerp(b,float(i)/15)
+  if blocked(sample,f):return false
+  if has_meta("user_models_installed") and preload("res://scripts/user_models_integration.gd").scan_obstacle(self,sample,f):return false
  return true
 func _process(dt:float):
  if paused:return
@@ -552,7 +554,9 @@ func _process(dt:float):
  elapsed+=dt;safe_time=maxf(0,safe_time-dt);action_time=maxf(0,action_time-dt);combo_timer=maxf(0,combo_timer-dt)
  if combo_timer<=0:combo=0
  if capture_time>0:
-  tick_capture(dt);hud.refresh();return
+  tick_capture(dt)
+  if has_meta("user_models_installed"):preload("res://scripts/user_models_integration.gd").update_visual_grounding(self)
+  hud.refresh();return
  var neighbor_before=neighbor_pos
  if state=="playing":
   if climbing>0:

@@ -46,6 +46,19 @@ func run()->void:
  for mission in range(24):
   game.start_case(mission)
   check(game.targets.size()>=4 and game.targets.size()<=8,"Mission %d incomplete"%(mission+1))
+ var integration=preload("res://scripts/user_models_integration.gd")
+ if FileAccess.file_exists(integration.SCAN_SURFACE) and FileAccess.file_exists(integration.SCAN_OBSTACLES):
+  for floor_index in range(2):
+   for location in [Vector2(-4.7,1.0),Vector2(-1.1,1.1),Vector2(2.2,1.1)]:
+    game.player_pos=location;game.floor_id=floor_index
+    game.hero.position=Vector3(location.x,game.floor_height(location,floor_index)-.015,location.y)
+    for repeat in range(12):integration.update_visual_grounding(game)
+    var visible_hero=game.hero.find_child("OwnersHighDetailHero",true,false)
+    var floor_y=integration._scan_height(game,location,floor_index)
+    var feet=game.hero.position.y+visible_hero.position.y-.951712*.84
+    check(absf(feet-floor_y)<.07,"Hero feet float on floor %d at %s"%[floor_index,str(location)])
+  check(not game.clear_line(Vector2(-4.1,1.1),Vector2(-3.0,1.1),0),"Neighbor sees through owner scan wall")
+  check(game.clear_line(Vector2(-5.3,1.1),Vector2(-4.25,1.1),0),"Clear room blocks neighbor vision")
  print("OWNER_MODEL_QA_DONE failures=",failures)
  game.queue_free()
  await process_frame

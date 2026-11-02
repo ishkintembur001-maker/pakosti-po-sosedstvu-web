@@ -107,8 +107,15 @@ static func _scan_height(game,p:Vector2,floor:int)->float:
 
 static func _clear_cell(d:Dictionary,floor:int,x:int,z:int)->bool:
  if x<0 or z<0 or x>=int(d.width) or z>=int(d.height):return false
- return String(d.floors[clampi(floor,0,1)][z])[x]=="0"
+ return d.floors[clampi(floor,0,1)][z].substr(x,1)=="0"
 
+static func scan_obstacle(game,p:Vector2,floor:int)->bool:
+ var d=_grid_data(game,SCAN_OBSTACLES,"_owner_scan_obstacles")
+ if d.is_empty():return false
+ var x=roundi((p.x-float(d.origin[0]))/float(d.cell))
+ var z=roundi((p.y-float(d.origin[1]))/float(d.cell))
+ if x<0 or z<0 or x>=int(d.width) or z>=int(d.height):return false
+ return not _clear_cell(d,floor,x,z)
 static func _safe_visual_position(game,p:Vector2,floor:int)->Vector2:
  var d=_grid_data(game,SCAN_OBSTACLES,"_owner_scan_obstacles")
  if d.is_empty():return p
@@ -135,17 +142,23 @@ static func update_visual_grounding(game)->void:
  var hero=game.hero.find_child("OwnersHighDetailHero",true,false)
  var neighbor=game.neighbor.find_child("OwnersHighDetailNeighbor",true,false)
  for data in [
-  {"actor":game.hero,"model":hero,"bottom":-.951712*.84},
-  {"actor":game.neighbor,"model":neighbor,"bottom":-.9522*.96}
+  {"actor":game.hero,"model":hero,"bottom":-.951712*.84,"contact":game.hero_contact},
+  {"actor":game.neighbor,"model":neighbor,"bottom":-.9522*.96,"contact":game.neighbor_contact}
  ]:
   var model=data.model as Node3D
   if model==null:continue
   var actor=data.actor as Node3D
   var p=Vector2(actor.position.x,actor.position.z)
-  var blend=clampf((actor.position.y-.25)/game.H,0.0,1.0)
+  var on_stairs=game.climbing>0 if actor==game.hero else game.enemy_climbing>0
+  var stable_floor=game.floor_id if actor==game.hero else game.neighbor_floor
+  var blend=clampf((actor.position.y-.25)/game.H,0.0,1.0) if on_stairs else float(stable_floor)
   var floor_y=lerpf(_scan_height(game,p,0),_scan_height(game,p,1),blend)
-  var target_y=floor_y-actor.position.y-float(data.bottom)+.035
-  model.position.y=lerpf(model.position.y,target_y,.35)
+  var target_y=floor_y-actor.position.y-float(data.bottom)+.025
+  if not is_finite(target_y):continue
+  model.position.y=lerpf(model.position.y,target_y,.60)
   var safe=_safe_visual_position(game,p,1 if blend>.5 else 0)
-  model.position.x=lerpf(model.position.x,safe.x-p.x,.3)
-  model.position.z=lerpf(model.position.z,safe.y-p.y,.3)
+  model.position.x=lerpf(model.position.x,safe.x-p.x,.50)
+  model.position.z=lerpf(model.position.z,safe.y-p.y,.50)
+  var contact=data.contact as MeshInstance3D
+  if is_instance_valid(contact):
+   contact.position=Vector3(actor.position.x+model.position.x,floor_y+.008,actor.position.z+model.position.z)
