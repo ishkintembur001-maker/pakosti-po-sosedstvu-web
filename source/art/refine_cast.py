@@ -132,7 +132,7 @@ for name in ['TricksterCharacter','NeighborCharacter']:
      roll=sign*.07*wave
     if wrist:
      x=-.035 if clip in ('idle','walk') else (-.10 if clip in ('sneak','run') else -.08*math.sin(t*math.pi))
-     roll=sign*(.09*wave if clip in ('walk','sneak','run') else .12*math.sin(t*math.pi))
+     roll=sign*(.23*wave if clip in ('walk','sneak','run') else .12*math.sin(t*math.pi))
     limb.rotation_euler=(x,y,roll);limb.keyframe_insert(data_path='rotation_euler',frame=frame)
    track=limb.animation_data.nla_tracks.new();track.name=clip;strip=track.strips.new(clip,1,action);strip.name=clip
    limb.animation_data.action=None;limb.rotation_euler=(0,0,0)
