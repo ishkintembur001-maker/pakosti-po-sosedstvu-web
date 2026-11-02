@@ -73,7 +73,8 @@ func run()->void:
  scene.safe_time=0
  scene.begin_capture()
  check(scene.capture_time>0 and scene.lives==2,"Neighbor catch must cost exactly one life")
- for frame in range(105):
+ # The catch lasts 1.8 seconds. 120 frames at 60 Hz cover the full clip.
+ for frame in range(120):
   scene.tick_capture(1.0/60.0)
   check(scene.lives==2,"Capture animation removed extra lives")
   if scene.capture_time>0:
