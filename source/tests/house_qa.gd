@@ -137,6 +137,7 @@ func run():
   if g.neighbor_floor==1:
    actually_ascended=true;break
  check(actually_ascended,"Neighbor could not navigate from lower patrol corridor to upstairs")
+ check(g.enemy_repath_time>0,"AI navigation should use a repath cooldown")
  g.start_case(0);check(g.particles.is_empty(),"Temporary prank effects leaked between levels")
  g.caught=0;check(g.qualifies_bonus(),"No-capture bonus should count")
  g.caught=1;check(not g.qualifies_bonus(),"No-capture bonus should fail after capture")

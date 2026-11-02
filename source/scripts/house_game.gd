@@ -61,6 +61,8 @@ var inventory=[0,0,0,0,0,0,0,0]
 var navs=[]
 var player_path=PackedVector2Array()
 var enemy_path=PackedVector2Array()
+var enemy_repath_time=0.0
+var enemy_path_goal=Vector2.INF
 var enemy_climbing=0.0
 var enemy_climb_from=0
 var enemy_climb_to=0
@@ -230,7 +232,7 @@ func start_case(n:int):
  for t in targets:t.node.queue_free()
  for t in supplies:t.node.queue_free()
  targets.clear();supplies.clear();if is_instance_valid(exit_marker):exit_marker.queue_free()
- inventory=[0,0,0,0,0,0,0,0];lives=3;caught=0;elapsed=0;action_time=0;stick=Vector2.ZERO;hidden=false;reaction=0;anger=0;anger_events=0;bonus_awarded=false;combo=0;best_combo=0;combo_timer=0;capture_time=0;safe_time=4;alert=0;climbing=0;state="playing";player_path.clear();enemy_path.clear();enemy_climbing=0;enemy_search_time=0;waypoint=1
+ inventory=[0,0,0,0,0,0,0,0];lives=3;caught=0;elapsed=0;action_time=0;stick=Vector2.ZERO;hidden=false;reaction=0;anger=0;anger_events=0;bonus_awarded=false;combo=0;best_combo=0;combo_timer=0;capture_time=0;safe_time=4;alert=0;climbing=0;state="playing";player_path.clear();enemy_path.clear();enemy_climbing=0;enemy_search_time=0;enemy_repath_time=0;enemy_path_goal=Vector2.INF;waypoint=1
  var tasks:Array=CASES[index].tasks
  for i in range(tasks.size()):
   var data:Array=tasks[i]
@@ -439,7 +441,7 @@ func begin_neighbor_stairs():
  enemy_climb_from=neighbor_floor;enemy_climb_to=floor_id
  enemy_climb_start=neighbor_pos
  enemy_climb_end=Vector2(5.0,-2.15) if enemy_climb_from==0 else Vector2(6.7,1.8)
- enemy_climbing=3.1;enemy_path.clear()
+ enemy_climbing=3.1;enemy_path.clear();enemy_repath_time=0
 func update_neighbor_stairs(dt:float):
  enemy_climbing=maxf(0,enemy_climbing-dt)
  var progress=1.0-enemy_climbing/3.1
@@ -457,9 +459,10 @@ func update_neighbor_stairs(dt:float):
  enemy_stair_world=Vector3(p.x,.2+height,p.y)
  if enemy_climbing<=0:
   neighbor_floor=enemy_climb_to;neighbor_pos=enemy_climb_end
-  enemy_path.clear();enemy_search_time=maxf(enemy_search_time,2.0)
+  enemy_path.clear();enemy_repath_time=0;enemy_search_time=maxf(enemy_search_time,2.0)
 func tick_enemy(dt:float):
  enemy_search_time=maxf(0,enemy_search_time-dt)
+ enemy_repath_time=maxf(0,enemy_repath_time-dt)
  if enemy_climbing>0:
   update_neighbor_stairs(dt)
   return
@@ -476,8 +479,10 @@ func tick_enemy(dt:float):
   begin_neighbor_stairs();return
  if neighbor_pos.distance_to(dest)<.15 and alert<=.85 and not pursue_stairs:
   waypoint=(waypoint+1)%route.size();dest=route[waypoint];enemy_path.clear()
- if enemy_path.is_empty() or (alert>.85 and int(elapsed*4)%3==0):
+ if enemy_path.is_empty() or enemy_repath_time<=0 or enemy_path_goal.distance_to(dest)>.35:
   enemy_path=path(neighbor_pos,dest,neighbor_floor)
+  enemy_path_goal=dest
+  enemy_repath_time=.65 if alert>.85 or pursue_stairs else 1.15
  while not enemy_path.is_empty() and neighbor_pos.distance_to(enemy_path[0])<.055:enemy_path.remove_at(0)
  if not enemy_path.is_empty():
   var step=enemy_path[0]-neighbor_pos
