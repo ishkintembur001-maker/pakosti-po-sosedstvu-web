@@ -36,7 +36,9 @@ func run():
   check(g.escape_ready and g.anger_events==g.targets.size(),"Mission cannot complete its own tasks")
   check(g.particles.size()<=112,"Unbounded temporary effects")
   check(g.targets.all(func(trap):return trap.used),"Mission reaction count mismatch")
- for mission in range(8):
+ # Full end-to-end playability: all 24, including walking, collecting, stairs,
+ # arming, actual neighbor patrol reactions and safe exit.
+ for mission in range(24):
   g.start_case(mission)
   for item in g.supplies:
    check(walk(g,item.pos),"Supply unreachable in case %d kind %d"%[mission,item.kind]);g.act();check(item.taken and g.inventory[item.kind]>0,"Pickup failed")
