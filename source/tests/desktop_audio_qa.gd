@@ -10,10 +10,10 @@ func run()->void:
   var stream=load(resource) as AudioStream
   check(stream!=null and stream.get_length()>10.0,"Music invalid "+resource)
  for n in range(1,4):
-  var resource="res://assets/voices/caught_%d.ogg"%n
-  check(ResourceLoader.exists(resource),"Voice absent "+resource)
-  var stream=load(resource) as AudioStream
-  check(stream!=null and stream.get_length()>.3,"Voice invalid "+resource)
+  var voice_path="res://assets/voices/caught_%d.ogg"%n
+  check(ResourceLoader.exists(voice_path),"Voice absent "+voice_path)
+  var voice_stream=load(voice_path) as AudioStream
+  check(voice_stream!=null and voice_stream.get_length()>.3,"Voice invalid "+voice_path)
  var menu=load("res://scenes/release_menu.tscn").instantiate()
  root.add_child(menu);await process_frame
  check(menu.music.playing,"Menu music did not start")
