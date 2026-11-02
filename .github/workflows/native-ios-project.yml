@@ -13,6 +13,8 @@ jobs:
     timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
+      - name: Disallow all Web exports and GitHub Pages deployments
+        run: python3 ci/assert_native_only.py
       - name: Install Blender and Godot for native iOS
         run: |
           brew install blender
