@@ -20,6 +20,11 @@ func run()->void:
  game._process(0)
  var h=game.hero.find_child("OwnersHighDetailHero",true,false)
  var n=game.neighbor.find_child("OwnersHighDetailNeighbor",true,false)
+ var scan=preload("res://scripts/user_models_integration.gd")
+ if FileAccess.file_exists(scan.SCAN_SURFACE) and FileAccess.file_exists(scan.SCAN_OBSTACLES):
+  scan.update_visual_grounding(game)
+  check(absf(h.position.x)<.68 and absf(h.position.z)<.68,"Hero mesh correction is too large")
+  check(absf(n.position.x)<.68 and absf(n.position.z)<.68,"Neighbor mesh correction is too large")
  check(h!=null and h.position.y>1.0,"Lower-floor hero feet are buried in the scan")
  check(n!=null and n.position.y>1.0,"Lower-floor neighbor feet are buried in the scan")
  check(h!=null,"User hero GLB not installed")

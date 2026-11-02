@@ -83,20 +83,69 @@ static func try_install(game) -> bool:
  print("OWNER_3D_MODELS_ENABLED: hero, neighbor, both storeys, roof hidden")
  return true
 
-# The source scan's geometric floors vary from the original gameplay height map.
-# Move only visuals, leaving the native AStar navigation and gameplay unchanged.
-static func update_visual_grounding(game) -> void:
- if not game.has_meta("user_models_installed"):
-  return
- var h=game.hero.find_child("OwnersHighDetailHero",true,false)
- var n=game.neighbor.find_child("OwnersHighDetailNeighbor",true,false)
- if h is Node3D:
-  var east=clampf((game.player_pos.x+4.2)/8.0,0.0,1.0)
-  var first_floor_bias=.52+.32*east
-  var blend=clampf(game.hero.position.y/game.H,0.0,1.0)
-  h.position.y=.79+lerpf(first_floor_bias,-.10,blend)
- if n is Node3D:
-  var east=clampf((game.neighbor_pos.x+4.2)/8.0,0.0,1.0)
-  var first_floor_bias=.52+.32*east
-  var blend=clampf(game.neighbor.position.y/game.H,0.0,1.0)
-  n.position.y=.91+lerpf(first_floor_bias,-.10,blend)
+# Use geometry sampled from the real scan. This changes visuals only,
+# retaining the existing navigable paths, traps and 24 missions.
+const SCAN_SURFACE="res://assets/data/owner_scan_surface.json"
+const SCAN_OBSTACLES="res://assets/data/owner_scan_obstacles.json"
+
+static func _grid_data(game,resource_path:String,cache_key:String)->Dictionary:
+ if game.has_meta(cache_key):return game.get_meta(cache_key)
+ var d:Dictionary={}
+ if FileAccess.file_exists(resource_path):
+  var v=JSON.parse_string(FileAccess.get_file_as_string(resource_path))
+  if v is Dictionary:d=v
+ game.set_meta(cache_key,d)
+ return d
+
+static func _scan_height(game,p:Vector2,floor:int)->float:
+ var d=_grid_data(game,SCAN_SURFACE,"_owner_scan_surface")
+ if d.is_empty():return game.floor_height(p,floor)
+ var x=clampi(roundi((p.x-float(d.origin[0]))/float(d.cell)),0,int(d.width)-1)
+ var z=clampi(roundi((p.y-float(d.origin[1]))/float(d.cell)),0,int(d.height)-1)
+ var sample=d.floors[clampi(floor,0,1)][z][x]
+ return game.floor_height(p,floor) if sample==null else float(sample)
+
+static func _clear_cell(d:Dictionary,floor:int,x:int,z:int)->bool:
+ if x<0 or z<0 or x>=int(d.width) or z>=int(d.height):return false
+ return String(d.floors[clampi(floor,0,1)][z])[x]=="0"
+
+static func _safe_visual_position(game,p:Vector2,floor:int)->Vector2:
+ var d=_grid_data(game,SCAN_OBSTACLES,"_owner_scan_obstacles")
+ if d.is_empty():return p
+ var size=float(d.cell)
+ var x=roundi((p.x-float(d.origin[0]))/size)
+ var z=roundi((p.y-float(d.origin[1]))/size)
+ var best=p
+ var threshold=.68
+ for dz in range(-3,4):
+  for dx in range(-3,4):
+   var xx=x+dx;var zz=z+dz;var safe=true
+   for nz in range(-1,2):
+    for nx in range(-1,2):
+     if not _clear_cell(d,floor,xx+nx,zz+nz):safe=false;break
+    if not safe:break
+   if not safe:continue
+   var candidate=Vector2(float(d.origin[0])+xx*size,float(d.origin[1])+zz*size)
+   var distance=p.distance_to(candidate)
+   if distance<threshold:best=candidate;threshold=distance
+ return best
+
+static func update_visual_grounding(game)->void:
+ if not game.has_meta("user_models_installed"):return
+ var hero=game.hero.find_child("OwnersHighDetailHero",true,false)
+ var neighbor=game.neighbor.find_child("OwnersHighDetailNeighbor",true,false)
+ for data in [
+  {"actor":game.hero,"model":hero,"bottom":-.951712*.84},
+  {"actor":game.neighbor,"model":neighbor,"bottom":-.9522*.96}
+ ]:
+  var model=data.model as Node3D
+  if model==null:continue
+  var actor=data.actor as Node3D
+  var p=Vector2(actor.position.x,actor.position.z)
+  var blend=clampf((actor.position.y-.25)/game.H,0.0,1.0)
+  var floor_y=lerpf(_scan_height(game,p,0),_scan_height(game,p,1),blend)
+  var target_y=floor_y-actor.position.y-float(data.bottom)+.035
+  model.position.y=lerpf(model.position.y,target_y,.35)
+  var safe=_safe_visual_position(game,p,1 if blend>.5 else 0)
+  model.position.x=lerpf(model.position.x,safe.x-p.x,.3)
+  model.position.z=lerpf(model.position.z,safe.y-p.y,.3)
