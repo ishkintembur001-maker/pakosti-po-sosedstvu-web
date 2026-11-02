@@ -23,7 +23,7 @@ func button(text:String,pos:Vector2,dimensions:Vector2,callback:Callable)->Butto
  var b=Button.new();b.text=text;b.position=pos;b.size=dimensions;b.focus_mode=Control.FOCUS_NONE
  for state in ["normal","hover","pressed"]:
   var style=StyleBoxFlat.new();style.bg_color=Color("2b464b") if state!="pressed" else Color("5a6550");style.border_color=Color("d2ad69");style.set_border_width_all(2);style.set_corner_radius_all(22);b.add_theme_stylebox_override(state,style)
- b.add_theme_font_size_override("font_size",22);b.pressed.connect(callback);add_child(b);return b
+ b.add_theme_font_size_override("font_size",22);b.mouse_default_cursor_shape=Control.CURSOR_POINTING_HAND;b.pressed.connect(callback);add_child(b);return b
 func layout():
  var s=get_viewport_rect().size;last_size=s
  var safe=64.0 if s.x/s.y>1.9 else 28.0
@@ -75,7 +75,13 @@ func make_panel()->PanelContainer:
  var p=PanelContainer.new();p.size=Vector2(500,360);p.position=(get_viewport_rect().size-p.size)*.5
  var style=StyleBoxFlat.new();style.bg_color=Color("14292f");style.set_corner_radius_all(24);style.set_border_width_all(2);style.border_color=Color("caa56a");style.content_margin_left=28;style.content_margin_right=28;style.content_margin_top=22;style.content_margin_bottom=22;p.add_theme_stylebox_override("panel",style);add_child(p);return p
 func panel_button(box:VBoxContainer,text:String,callback:Callable):
- var b=Button.new();b.text=text;b.custom_minimum_size.y=70;b.add_theme_font_size_override("font_size",23);b.pressed.connect(callback);box.add_child(b)
+ var b=Button.new();b.text=text;b.custom_minimum_size.y=70;b.add_theme_font_size_override("font_size",23)
+ b.mouse_default_cursor_shape=Control.CURSOR_POINTING_HAND
+ for mode in ["normal","hover","pressed","focus"]:
+  var style=StyleBoxFlat.new();style.bg_color=Color("2b4144") if mode=="normal" else (Color("4f645c") if mode=="hover" else Color("625b45"))
+  style.border_color=Color("c9a773");style.set_border_width_all(1);style.set_corner_radius_all(14)
+  b.add_theme_stylebox_override(mode,style)
+ b.pressed.connect(callback);box.add_child(b)
 func show_pause():
  if is_instance_valid(pause_panel):return
  game.set_paused(true);pause_panel=make_panel();var box=VBoxContainer.new();box.add_theme_constant_override("separation",10);pause_panel.add_child(box)

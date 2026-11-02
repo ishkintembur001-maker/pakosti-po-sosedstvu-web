@@ -66,6 +66,7 @@ func mobile_button(text:String,callback:Callable)->Button:
   style.set_border_width_all(2);style.set_corner_radius_all(16)
   b.add_theme_stylebox_override(state,style)
  if text=="ИГРАТЬ":b.add_theme_color_override("font_color",Color("162326"))
+ b.mouse_default_cursor_shape=Control.CURSOR_POINTING_HAND
  b.pressed.connect(callback);panel.add_child(b);return b
 func layout_menu():
  if not is_instance_valid(panel):return
@@ -112,6 +113,19 @@ func dialog(title:String)->VBoxContainer:
  var l=Label.new();l.text=title;l.modulate=Color("e9ca8b");l.add_theme_font_size_override("font_size",22);box.add_child(l);return box
 func close_button(box:VBoxContainer):
  var b=Button.new();b.text="НАЗАД";b.custom_minimum_size.y=68;b.pressed.connect(dismiss);box.add_child(b)
+func apply_mission_style(btn:Button,completed:bool,locked:bool):
+ for mode in ["normal","hover","pressed","disabled","focus"]:
+  var st=StyleBoxFlat.new()
+  st.bg_color=Color("16292d") if locked else (Color("374840") if completed else Color("294247"))
+  if mode=="hover":st.bg_color=Color("4b615e")
+  if mode=="pressed":st.bg_color=Color("6c694e")
+  st.border_color=Color("d8bc80") if completed else Color("788e86")
+  st.set_border_width_all(1)
+  st.set_corner_radius_all(11)
+  btn.add_theme_stylebox_override(mode,st)
+ btn.add_theme_color_override("font_color",Color("f6e8ce"))
+ btn.add_theme_color_override("font_disabled_color",Color("7e918c"))
+ btn.mouse_default_cursor_shape=Control.CURSOR_POINTING_HAND if not locked else Control.CURSOR_ARROW
 func open_cases():
  settings.load(SAVE);var unlocked=int(settings.get_value("house","unlocked",0))
  var mission_count=preload("res://scripts/house_game.gd").CASES.size()
@@ -128,7 +142,7 @@ func open_cases():
   if best>0:b.text+="\nРЕКОРД: %d"%best
   b.disabled=i>unlocked;b.custom_minimum_size=Vector2(318,65)
   b.add_theme_font_size_override("font_size",15 if best>0 else 18)
-  b.clip_text=true;grid.add_child(b)
+  b.clip_text=true;apply_mission_style(b,best>0,i>unlocked);grid.add_child(b)
   var selected=i;b.pressed.connect(func():start_house(selected))
  var row=HBoxContainer.new();row.add_theme_constant_override("separation",12);box.add_child(row)
  var classic=Button.new();classic.text="КЛАССИЧЕСКИЕ УРОВНИ";classic.custom_minimum_size=Vector2(318,68);classic.pressed.connect(start_classic);row.add_child(classic)
