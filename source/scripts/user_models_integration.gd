@@ -100,8 +100,9 @@ static func _grid_data(game,resource_path:String,cache_key:String)->Dictionary:
 static func _scan_height(game,p:Vector2,floor:int)->float:
  var d=_grid_data(game,SCAN_SURFACE,"_owner_scan_surface")
  if d.is_empty():return game.floor_height(p,floor)
- var x=clampi(roundi((p.x-float(d.origin[0]))/float(d.cell)),0,int(d.width)-1)
- var z=clampi(roundi((p.y-float(d.origin[1]))/float(d.cell)),0,int(d.height)-1)
+ var x=roundi((p.x-float(d.origin[0]))/float(d.cell))
+ var z=roundi((p.y-float(d.origin[1]))/float(d.cell))
+ if x<0 or z<0 or x>=int(d.width) or z>=int(d.height):return game.floor_height(p,floor)
  var sample=d.floors[clampi(floor,0,1)][z][x]
  return game.floor_height(p,floor) if sample==null else float(sample)
 
