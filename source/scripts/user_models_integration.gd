@@ -28,10 +28,24 @@ static func available() -> bool:
  # Characters plus either exact source geometry or the derived owner mobile LOD.
  return master_available() or mobile_available()
 
+static func _high_fidelity_texture_filtering(model:Node3D) -> void:
+ # Preserve imported material textures and replace only their sampling mode.
+ for node in model.find_children("*", "MeshInstance3D", true, false):
+  var mesh_instance=node as MeshInstance3D
+  if mesh_instance.mesh==null:continue
+  for surface_id in range(mesh_instance.mesh.get_surface_count()):
+   var material=mesh_instance.get_active_material(surface_id)
+   if material is BaseMaterial3D:
+    var preserved=material.duplicate() as BaseMaterial3D
+    preserved.texture_filter=BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
+    mesh_instance.set_surface_override_material(surface_id,preserved)
+
 static func _create_model(resource_path:String) -> Node3D:
  var resource=ResourceLoader.load(resource_path)
  if resource is PackedScene:
-  return (resource as PackedScene).instantiate() as Node3D
+  var instance=(resource as PackedScene).instantiate() as Node3D
+  if instance!=null:_high_fidelity_texture_filtering(instance)
+  return instance
  return null
 
 static func _find_player(model:Node3D) -> AnimationPlayer:

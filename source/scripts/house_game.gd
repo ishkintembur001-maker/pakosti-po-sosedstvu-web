@@ -184,7 +184,14 @@ func _ready():
   var p=AudioStreamPlayer.new();p.stream=load("res://assets/sfx/%s.wav"%k);p.bus="SFX";add_child(p);sfx[k]=p
  neighbor_voice=AudioStreamPlayer.new();neighbor_voice.bus="SFX";neighbor_voice.name="NeighborVoice";add_child(neighbor_voice)
  start_case(index)
- var cfg=ConfigFile.new();cfg.load("user://pakosti_release.cfg");set_quality(bool(cfg.get_value("graphics","detail",not OS.has_feature("mobile"))))
+ var cfg=ConfigFile.new()
+ cfg.load("user://pakosti_release.cfg")
+ # Old builds silently saved low quality after temporary FPS drops.
+ if not bool(cfg.get_value("graphics","fidelity_restored_20261103",false)):
+  cfg.set_value("graphics","detail",true)
+  cfg.set_value("graphics","fidelity_restored_20261103",true)
+  cfg.save("user://pakosti_release.cfg")
+ set_quality(bool(cfg.get_value("graphics","detail",true)))
 
 func show_notice(message:String)->void:
  message_text=message;message_time=2.5
@@ -671,10 +678,10 @@ func _process(dt:float):
  for i in range(particles.size()-1,-1,-1):
   var p=particles[i];p.life-=dt;p.node.position+=p.velocity*dt;p.velocity.y-=dt*4
   if p.life<=0:p.node.queue_free();particles.remove_at(i)
+ # Never silently degrade art because of a temporary FPS drop.
  fps_time+=dt;fps_frames+=1
- if fps_time>4 and quality:
-  if fps_frames/fps_time<25:set_quality(false)
-  fps_time=0;fps_frames=0
+ if fps_time>4.0:
+  fps_time=0.0;fps_frames=0
  update_prank_labels();hud.refresh()
 func move_player(dt:float):
  var input=Input.get_vector("ui_left","ui_right","ui_up","ui_down")+stick
@@ -736,11 +743,17 @@ func animate(actor:Node3D,speed:float,pose:int):
  preload("res://scripts/cast_expressions.gd").apply(actor,elapsed,actor==neighbor,pose==99,anger if actor==neighbor else 0.0)
  actor.rotation.z=sin(elapsed*12)*.12 if pose in [1,3] else 0
 func set_quality(enabled:bool):
- quality=enabled;shadow.shadow_enabled=enabled;get_viewport().scaling_3d_scale=1 if enabled else .75
- # Smooth mode uses lower-cost unshadowed local lighting; detailed mode retains depth.
+ quality=enabled
+ shadow.shadow_enabled=enabled
+ get_viewport().scaling_3d_scale=1.0 if enabled else .90
+ get_viewport().mesh_lod_threshold=0.0 if enabled else 1.0
+ get_viewport().texture_mipmap_bias=-0.2 if enabled else 0.0
  if is_instance_valid(warm_room_key):warm_room_key.light_energy=.48 if enabled else .32
  if is_instance_valid(cool_room_fill):cool_room_fill.light_energy=.19 if enabled else .11
- get_viewport().msaa_3d=Viewport.MSAA_2X if enabled else Viewport.MSAA_DISABLED
+ if enabled:
+  get_viewport().msaa_3d=Viewport.MSAA_2X if OS.has_feature("mobile") else Viewport.MSAA_4X
+ else:
+  get_viewport().msaa_3d=Viewport.MSAA_DISABLED
  for sm in slice_materials:sm.set_shader_parameter("detail_normals",enabled)
  var cfg=ConfigFile.new();cfg.load("user://pakosti_release.cfg");cfg.set_value("graphics","detail",enabled);cfg.save("user://pakosti_release.cfg")
 func click_world(p:Vector2):
